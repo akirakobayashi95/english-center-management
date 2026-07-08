@@ -1,0 +1,402 @@
+   600→   600→        </div>
+   601→   601→      </div>
+   602→   602→      <div className="overflow-x-auto">
+   603→   603→        <table className="w-full text-sm min-w-[600px]">
+   604→   604→          <thead>
+   605→   605→            <tr className="bg-gray-50">
+   606→   606→              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">ID</th>
+   607→   607→              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">Họ tên</th>
+   608→   608→              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden sm:table-cell">Ngày sinh</th>
+   609→   609→              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden md:table-cell">Giới tính</th>
+   610→   610→              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden lg:table-cell">SĐT</th>
+   611→   611→              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden lg:table-cell">Email</th>
+   612→   612→              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">Lớp</th>
+   613→   613→              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">Trạng thái</th>
+   614→   614→              <th className="text-center p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm"></th>
+   615→   615→            </tr>
+   616→   616→          </thead>
+   617→   617→          <tbody>
+   618→   618→            {students.map((s, i) => (
+   619→   619→              <tr key={i} className="border-t hover:bg-gray-50">
+   620→   620→                <td className="p-3 text-gray-500">{s.studentId}</td>
+   621→   621→                <td className="p-3 font-medium">{s.name}</td>
+   622→   622→                <td className="p-3">{formatDate(s.birthDate)}</td>
+   623→   623→                <td className="p-3">{s.gender}</td>
+   624→   624→                <td className="p-3">{s.phone}</td>
+   625→   625→                <td className="p-3">{s.email}</td>
+   626→   626→                <td className="p-3">{s.className}</td>
+   627→   627→                <td className="p-3"><StatusBadge status={s.status} /></td>
+   628→   628→                <td className="p-3 text-center">
+   629→   629→                  <div className="flex justify-center gap-1">
+   630→   630→                    <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setStudentModal({ open: true, editing: true, data: { studentId: s.studentId, name: s.name, birthDate: s.birthDate || '', gender: s.gender, phone: s.phone, email: s.email, address: s.address, className: s.className, note: s.note, status: s.status } })}><Edit size={14} /></button>
+   631→   631→                    <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteStudent(s.studentId)}><Trash2 size={14} /></button>
+   632→   632→                  </div>
+   633→   633→                </td>
+   634→   634→              </tr>
+   635→   635→            ))}
+   636→   636→            {students.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
+   637→   637→          </tbody>
+   638→   638→        </table>
+   639→   639→      </div>
+   640→   640→    </div>
+   641→   641→  );
+   642→   642→
+   643→   643→  const renderClasses = () => (
+   644→   644→    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+   645→   645→      <div className="p-3 sm:p-5 border-b flex justify-between items-center gap-2">
+   646→   646→        <h3 className="font-bold text-sm sm:text-base"> Danh sách Lớp học</h3>
+   647→   647→        <button className={`${btnPrimary} flex items-center gap-1 text-xs sm:text-sm`} onClick={() => setClassModal({ open: true, editing: false, data: { ...emptyClass } })}>
+   648→   648→          <Plus size={14} /> <span className="hidden sm:inline">Thêm lớp</span>
+   649→   649→        </button>
+   650→   650→      </div>
+   651→   651→      <div className="overflow-x-auto">
+   652→   652→        <table className="w-full text-xs sm:text-sm min-w-[600px]">
+   653→   653→          <thead>
+   654→   654→            <tr className="bg-gray-50">
+   655→   655→              <th className="text-left p-3 font-semibold text-gray-500">ID</th>
+   656→   656→              <th className="text-left p-3 font-semibold text-gray-500">Tên lớp</th>
+   657→   657→              <th className="text-left p-3 font-semibold text-gray-500">Trình độ</th>
+   658→   658→              <th className="text-left p-3 font-semibold text-gray-500">Giáo viên</th>
+   659→   659→              <th className="text-center p-3 font-semibold text-gray-500">Sĩ số tối đa</th>
+   660→   660→              <th className="text-left p-3 font-semibold text-gray-500">Học phí/buổi</th>
+   661→   661→              <th className="text-center p-3 font-semibold text-gray-500">Sĩ số hiện tại</th>
+   662→   662→              <th className="text-center p-3 font-semibold text-gray-500">Thao tác</th>
+   663→   663→            </tr>
+   664→   664→          </thead>
+   665→   665→          <tbody>
+   666→   666→            {classes.map((c, i) => {
+   667→   667→              const count = students.filter(s => s.className === c.name).length;
+   668→   668→              return (
+   669→   669→                <tr key={i} className="border-t hover:bg-gray-50">
+   670→   670→                  <td className="p-3 text-gray-500">{c.classId}</td>
+   671→   671→                  <td className="p-3 font-medium">{c.name}</td>
+   672→   672→                  <td className="p-3"><LevelBadge level={c.level} /></td>
+   673→   673→                  <td className="p-3">{c.teacher}</td>
+   674→   674→                  <td className="p-3 text-center">{c.maxStudents}</td>
+   675→   675→                  <td className="p-3">{formatCurrency(c.feePerSession)}</td>
+   676→   676→                  <td className="p-3 text-center">{count}/{c.maxStudents}</td>
+   677→   677→                  <td className="p-3 text-center">
+   678→   678→                    <div className="flex justify-center gap-1">
+   679→   679→                      <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setClassModal({ open: true, editing: true, data: { classId: c.classId, name: c.name, level: c.level, teacher: c.teacher, maxStudents: c.maxStudents, feePerSession: c.feePerSession, note: c.note } })}><Edit size={14} /></button>
+   680→   680→                      <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteClassItem(c.classId)}><Trash2 size={14} /></button>
+   681→   681→                    </div>
+   682→   682→                  </td>
+   683→   683→                </tr>
+   684→   684→              );
+   685→   685→            })}
+   686→   686→          </tbody>
+   687→   687→        </table>
+   688→   688→      </div>
+   689→   689→    </div>
+   690→   690→  );
+   691→   691→
+   692→   692→  const renderSchedule = () => {
+   693→   693→    const monthStart = startOfMonth(scheduleMonth);
+   694→   694→    const monthEnd = endOfMonth(scheduleMonth);
+   695→   695→    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+   696→   696→    const startDay = monthStart.getDay();
+   697→   697→    const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+   698→   698→    const getScheduleClass = (name: string) => {
+   699→   699→      if (name.includes('Ngữ Văn')) return 'bg-blue-100 text-blue-700';
+   700→   700→      if (name.includes('Toán')) return 'bg-green-100 text-green-700';
+   701→   701→      if (name.includes('Anh')) return 'bg-yellow-100 text-yellow-700';
+   702→   702→      return 'bg-gray-100 text-gray-600';
+   703→   703→    };
+   704→   704→    return (
+   705→   705→      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+   706→   706→        <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+   707→   707→          <div className="flex items-center gap-3">
+   708→   708→            <button onClick={() => setScheduleMonth(new Date(scheduleMonth.getFullYear(), scheduleMonth.getMonth() - 1))} className="p-2 hover:bg-gray-100 rounded-lg"><ChevronLeft size={18} /></button>
+   709→   709→            <h3 className="font-bold">{format(scheduleMonth, 'MMMM yyyy')}</h3>
+   710→   710→            <button onClick={() => setScheduleMonth(new Date(scheduleMonth.getFullYear(), scheduleMonth.getMonth() + 1))} className="p-2 hover:bg-gray-100 rounded-lg"><ChevronRight size={18} /></button>
+   711→   711→          </div>
+   712→   712→          <div className="flex gap-2 flex-wrap items-center">
+   713→   713→            <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className={selectClass}>
+   714→   714→              <option value="">Tất cả lớp</option>
+   715→   715→              {classes.map(c => <option key={c.classId} value={c.name}>{c.name}</option>)}
+   716→   716→            </select>
+   717→   717→            <button className={`${btnPrimary} flex items-center gap-1`} onClick={() => setScheduleModal({ open: true, data: { ...emptySchedule } })}>
+   718→   718→              <Plus size={14} /> Thêm lịch
+   719→   719→            </button>
+   720→   720→          </div>
+   721→   721→        </div>
+   722→   722→        <div className="p-2 sm:p-4">
+   723→   723→          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+   724→   724→            {dayNames.map(d => <div key={d} className="text-center py-1 sm:py-2 text-[10px] sm:text-sm font-semibold text-gray-500 bg-gray-50 rounded">{d}</div>)}
+   725→   725→            {Array.from({ length: startDay }).map((_, i) => <div key={`e-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-gray-50 rounded" />)}
+   726→   726→            {days.map((day, i) => {
+   727→   727→              const dateStr = format(day, 'yyyy-MM-dd');
+   728→   728→              const daySchedules = schedules.filter(s => s.date === dateStr);
+   729→   729→              const isTodayDate = isToday(day);
+   730→   730→              return (
+   731→   731→                <div key={i} className={`min-h-[60px] sm:min-h-[100px] p-0.5 sm:p-1 border rounded text-[10px] sm:text-xs ${isTodayDate ? 'bg-amber-50 border-amber-300' : 'bg-white'}`}>
+   732→   732→                  <div className="text-xs sm:text-sm font-semibold mb-0 sm:mb-1">{format(day, 'dd')}</div>
+   733→   733→                  {daySchedules.map(s => (
+   734→   734→                    <div key={s.id} className={`p-0.5 sm:p-1 rounded mb-0 sm:mb-1 truncate text-[8px] sm:text-xs ${getScheduleClass(s.className)} hidden sm:block`} title={`${s.className} - ${s.startTime}-${s.endTime} - ${s.teacher}`}>
+   735→   735→                      {s.className.length > 12 ? s.className.substring(0, 12) + '..' : s.className}
+   736→   736→                    </div>
+   737→   737→                  ))}
+   738→   738→                  {daySchedules.length > 0 && <div className="sm:hidden text-[8px] text-amber-600">{daySchedules.length} lớp</div>}
+   739→   739→                </div>
+   740→   740→              );
+   741→   741→            })}
+   742→   742→          </div>
+   743→   743→        </div>
+   744→   744→      </div>
+   745→   745→    );
+   746→   746→  };
+   747→   747→
+   748→   748→  const renderAttendance = () => {
+   749→   749→    const monthStart = startOfMonth(attendanceMonth);
+   750→   750→    const monthEnd = endOfMonth(attendanceMonth);
+   751→   751→    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+   752→   752→    const filteredStudents = selectedClass ? students.filter(s => s.className === selectedClass) : students;
+   753→   753→
+   754→   754→    return (
+   755→   755→      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+   756→   756→        <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+   757→   757→          <div className="flex items-center justify-between gap-2">
+   758→   758→            <div className="flex items-center gap-2">
+   759→   759→              <h3 className="font-bold text-sm sm:text-base"> Bảng điểm danh</h3>
+   760→   760→              <div className="flex items-center gap-1">
+   761→   761→                <button onClick={() => setAttendanceMonth(new Date(attendanceMonth.getFullYear(), attendanceMonth.getMonth() - 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronLeft size={14} className="sm:w-4 sm:h-4" /></button>
+   762→   762→                <span className="text-xs sm:text-sm font-semibold">{format(attendanceMonth, 'MM/yyyy')}</span>
+   763→   763→                <button onClick={() => setAttendanceMonth(new Date(attendanceMonth.getFullYear(), attendanceMonth.getMonth() + 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronRight size={14} className="sm:w-4 sm:h-4" /></button>
+   764→   764→              </div>
+   765→   765→            </div>
+   766→   766→          </div>
+   767→   767→          <div className="flex gap-2 flex-wrap items-center w-full">
+   768→   768→            <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className={`${selectClass} flex-1 min-w-[100px] text-xs sm:text-sm`}>
+   769→   769→              <option value="">Tất cả lớp</option>
+   770→   770→              {classes.map(c => <option key={c.classId} value={c.name}>{c.name}</option>)}
+   771→   771→            </select>
+   772→   772→            <button className={`${btnSuccess} flex items-center gap-1 text-xs sm:text-sm flex-shrink-0`} onClick={() => {
+   773→   773→              const data: Record<string, string> = {};
+   774→   774→              filteredStudents.forEach(s => { data[s.studentId] = 'Có mặt'; });
+   775→   775→              setQuickAttData(data);
+   776→   776→              setQuickAttModal(true);
+   777→   777→            }}>
+   778→   778→              <CheckSquare size={14} /> <span className="hidden sm:inline">Điểm danh nhanh</span><span className="sm:hidden">Nhanh</span>
+   779→   779→            </button>
+   780→   780→          </div>
+   781→   781→        </div>
+   782→   782→        <div className="overflow-x-auto -mx-3 sm:mx-0">
+   783→   783→          <table className="w-full text-xs sm:text-sm min-w-[600px] sm:min-w-[800px]">
+   784→   784→            <thead>
+   785→   785→              <tr className="bg-gray-50">
+   786→   786→                <th className="text-left p-2 font-semibold text-gray-500 sticky left-0 bg-gray-50 z-10 min-w-[160px]">Học sinh</th>
+   787→   787→                {days.map(day => {
+   788→   788→                  const dateStr = format(day, 'yyyy-MM-dd');
+   789→   789→                  const dayOfWeek = getDayOfWeek(dateStr);
+   790→   790→                  return (
+   791→   791→                    <th key={dateStr} className="p-2 text-center font-semibold text-gray-500 text-xs min-w-[36px]">
+   792→   792→                      <div className="text-gray-400">{dayOfWeek}</div>
+   793→   793→                      <div>{format(day, 'dd')}</div>
+   794→   794→                    </th>
+   795→   795→                  );
+   796→   796→                })}
+   797→   797→                <th className="p-2 text-center font-semibold text-gray-500 min-w-[50px]">Tổng</th>
+   798→   798→              </tr>
+   799→   799→            </thead>
+   800→   800→            <tbody>
+   801→   801→              {filteredStudents.map(s => {
+   802→   802→                const studentAtt = attendance.filter(a => a.studentId === s.studentId);
+   803→   803→                const presentCount = studentAtt.filter(a => a.status === 'Có mặt').length;
+   804→   804→                return (
+   805→   805→                  <tr key={s.studentId} className="border-t hover:bg-gray-50">
+   806→   806→                    <td className="p-2 font-medium sticky left-0 bg-white z-10">{s.name}</td>
+   807→   807→                    {days.map(day => {
+   808→   808→                      const dateStr = format(day, 'yyyy-MM-dd');
+   809→   809→                      const record = attendance.find(a => a.studentId === s.studentId && a.date === dateStr);
+   810→   810→                      if (record) {
+   811→   811→                        const colors = STATUS_COLORS[record.status] || { bg: 'bg-gray-100', icon: '' };
+   812→   812→                        return (
+   813→   813→                          <td key={dateStr} className="p-1 text-center">
+   814→   814→                            <div
+   815→   815→                              className={`w-8 h-8 rounded-lg flex items-center justify-center mx-auto cursor-pointer hover:scale-110 transition-transform ${colors.bg}`}
+   816→   816→                              onClick={() => setAttCellModal({ open: true, date: dateStr, studentId: s.studentId, status: record.status, note: record.note || '' })}
+   817→   817→                              title={`${record.status}${record.note ? ': ' + record.note : ''}`}
+   818→   818→                            >
+   819→   819→                              {colors.icon}
+   820→   820→                            </div>
+   821→   821→                          </td>
+   822→   822→                        );
+   823→   823→                      }
+   824→   824→                      return (
+   825→   825→                        <td key={dateStr} className="p-1 text-center">
+   826→   826→                          <div
+   827→   827→                            className="w-8 h-8 rounded-lg bg-gray-100 mx-auto cursor-pointer hover:bg-gray-200 transition-colors"
+   828→   828→                            onClick={() => setAttCellModal({ open: true, date: dateStr, studentId: s.studentId, status: '', note: '' })}
+   829→   829→                          />
+   830→   830→                        </td>
+   831→   831→                      );
+   832→   832→                    })}
+   833→   833→                    <td className="p-2 text-center font-semibold text-green-600">{presentCount}</td>
+   834→   834→                  </tr>
+   835→   835→                );
+   836→   836→              })}
+   837→   837→            </tbody>
+   838→   838→          </table>
+   839→   839→        </div>
+   840→   840→        <div className="flex gap-4 p-3 bg-gray-50 border-t text-sm">
+   841→   841→          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500" /> Có mặt</span>
+   842→   842→          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500" /> Vắng</span>
+   843→   843→          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-500" /> Có phép</span>
+   844→   844→          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-500" /> Đi trễ</span>
+   845→   845→          <span className="text-gray-400 ml-2">Click vào ô để điểm danh</span>
+   846→   846→        </div>
+   847→   847→      </div>
+   848→   848→    );
+   849→   849→  };
+   850→   850→
+   851→   851→  const renderEvaluations = () => (
+   852→   852→    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+   853→   853→      <div className="p-5 border-b flex justify-between items-center">
+   854→   854→        <h3 className="font-bold">⭐ Đánh giá Học sinh</h3>
+   855→   855→        <button className={`${btnPrimary} flex items-center gap-1`} onClick={() => setEvaluationModal({ open: true, data: { ...emptyEvaluation, date: new Date().toISOString().split('T')[0] } })}>
+   856→   856→          <Plus size={14} /> Thêm đánh giá
+   857→   857→        </button>
+   858→   858→      </div>
+   859→   859→      <div className="overflow-x-auto">
+   860→   860→        <table className="w-full text-xs sm:text-sm min-w-[600px]">
+   861→   861→          <thead>
+   862→   862→            <tr className="bg-gray-50">
+   863→   863→              <th className="text-left p-3 font-semibold text-gray-500">ID</th>
+   864→   864→              <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
+   865→   865→              <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
+   866→   866→              <th className="text-left p-3 font-semibold text-gray-500">Ngày</th>
+   867→   867→              <th className="text-center p-3 font-semibold text-gray-500">Chuyên cần</th>
+   868→   868→              <th className="text-center p-3 font-semibold text-gray-500">Kiểm tra</th>
+   869→   869→              <th className="text-center p-3 font-semibold text-gray-500">Thi</th>
+   870→   870→              <th className="text-left p-3 font-semibold text-gray-500">Nhận xét</th>
+   871→   871→              <th className="text-center p-3 font-semibold text-gray-500">Xếp loại</th>
+   872→   872→              <th className="text-center p-3 font-semibold text-gray-500">Thao tác</th>
+   873→   873→            </tr>
+   874→   874→          </thead>
+   875→   875→          <tbody>
+   876→   876→            {evaluations.map((e, i) => (
+   877→   877→              <tr key={i} className="border-t hover:bg-gray-50">
+   878→   878→                <td className="p-3 text-gray-500">{e.evaluationId}</td>
+   879→   879→                <td className="p-3 font-medium">{e.studentName}</td>
+   880→   880→                <td className="p-3">{e.className}</td>
+   881→   881→                <td className="p-3">{formatDate(e.date)}</td>
+   882→   882→                <td className="p-3 text-center">{e.attendScore}</td>
+   883→   883→                <td className="p-3 text-center">{e.testScore}</td>
+   884→   884→                <td className="p-3 text-center">{e.examScore}</td>
+   885→   885→                <td className="p-3 text-xs max-w-[200px] truncate">{e.note}</td>
+   886→   886→                <td className="p-3 text-center font-semibold" style={{ color: GRADE_COLORS[e.grade] || '#64748b' }}>{e.grade}</td>
+   887→   887→                <td className="p-3 text-center">
+   888→   888→                  <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteEvaluationItem(e.evaluationId)}><Trash2 size={14} /></button>
+   889→   889→                </td>
+   890→   890→              </tr>
+   891→   891→            ))}
+   892→   892→            {evaluations.length === 0 && <tr><td colSpan={10} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
+   893→   893→          </tbody>
+   894→   894→        </table>
+   895→   895→      </div>
+   896→   896→    </div>
+   897→   897→  );
+   898→   898→
+   899→   899→  const renderGrades = () => (
+   900→   900→    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+   901→   901→      <div className="p-5 border-b flex justify-between items-center">
+   902→   902→        <h3 className="font-bold">📝 Bảng Điểm</h3>
+   903→   903→        <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className={selectClass}>
+   904→   904→          <option value="">Tất cả lớp</option>
+   905→   905→          {classes.map(c => <option key={c.classId} value={c.name}>{c.name}</option>)}
+   906→   906→        </select>
+   907→   907→      </div>
+   908→   908→      <div className="overflow-x-auto">
+   909→   909→        <table className="w-full text-xs sm:text-sm min-w-[600px]">
+   910→   910→          <thead>
+   911→   911→            <tr className="bg-gray-50">
+   912→   912→              <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
+   913→   913→              <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
+   914→   914→              <th className="text-center p-3 font-semibold text-gray-500">Chuyên cần</th>
+   915→   915→              <th className="text-center p-3 font-semibold text-gray-500">Kiểm tra</th>
+   916→   916→              <th className="text-center p-3 font-semibold text-gray-500">Thi</th>
+   917→   917→              <th className="text-center p-3 font-semibold text-gray-500">Trung bình</th>
+   918→   918→              <th className="text-center p-3 font-semibold text-gray-500">Xếp loại</th>
+   919→   919→            </tr>
+   920→   920→          </thead>
+   921→   921→          <tbody>
+   922→   922→            {evaluations.map((e, i) => {
+   923→   923→              const avg = Math.round((e.attendScore || 0) * 0.3 + (e.testScore || 0) * 0.3 + (e.examScore || 0) * 0.4);
+   924→   924→              return (
+   925→   925→                <tr key={i} className="border-t hover:bg-gray-50">
+   926→   926→                  <td className="p-3 font-medium">{e.studentName}</td>
+   927→   927→                  <td className="p-3">{e.className}</td>
+   928→   928→                  <td className="p-3 text-center">{e.attendScore}</td>
+   929→   929→                  <td className="p-3 text-center">{e.testScore}</td>
+   930→   930→                  <td className="p-3 text-center">{e.examScore}</td>
+   931→   931→                  <td className="p-3 text-center font-bold">{avg}</td>
+   932→   932→                  <td className="p-3 text-center font-semibold" style={{ color: GRADE_COLORS[e.grade] || '#64748b' }}>{e.grade}</td>
+   933→   933→                </tr>
+   934→   934→              );
+   935→   935→            })}
+   936→   936→            {evaluations.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
+   937→   937→          </tbody>
+   938→   938→        </table>
+   939→   939→      </div>
+   940→   940→    </div>
+   941→   941→  );
+   942→   942→
+   943→   943→  const renderBills = () => (
+   944→   944→    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+   945→   945→      <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+   946→   946→        <h3 className="font-bold"> Hoá đơn</h3>
+   947→   947→        <div className="flex gap-2 flex-wrap items-center">
+   948→   948→          <div className="flex items-center gap-2">
+   949→   949→            <button onClick={() => setAttendanceMonth(new Date(attendanceMonth.getFullYear(), attendanceMonth.getMonth() - 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronLeft size={16} /></button>
+   950→   950→            <span className="text-sm font-semibold">{format(attendanceMonth, 'MM/yyyy')}</span>
+   951→   951→            <button onClick={() => setAttendanceMonth(new Date(attendanceMonth.getFullYear(), attendanceMonth.getMonth() + 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronRight size={16} /></button>
+   952→   952→          </div>
+   953→   953→          <button className={`${btnSuccess} flex items-center gap-1`} onClick={generateBillsFromAttendance}>
+   954→   954→            <DollarSign size={14} /> Tạo hoá đơn từ điểm danh
+   955→   955→          </button>
+   956→   956→          <button className={`${btnPrimary} flex items-center gap-1`} onClick={() => {
+   957→   957→            const monthStr = format(attendanceMonth, 'MM/yyyy');
+   958→   958→            setBillModal({ open: true, data: { ...emptyBill, month: monthStr } });
+   959→   959→          }}>
+   960→   960→            <Plus size={14} /> Thêm hoá đơn
+   961→   961→          </button>
+   962→   962→        </div>
+   963→   963→      </div>
+   964→   964→      <div className="overflow-x-auto">
+   965→   965→        <table className="w-full text-xs sm:text-sm min-w-[600px]">
+   966→   966→          <thead>
+   967→   967→            <tr className="bg-gray-50">
+   968→   968→              <th className="text-left p-3 font-semibold text-gray-500">ID</th>
+   969→   969→              <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
+   970→   970→              <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
+   971→   971→              <th className="text-left p-3 font-semibold text-gray-500">Tháng</th>
+   972→   972→              <th className="text-center p-3 font-semibold text-gray-500">Buổi</th>
+   973→   973→              <th className="text-right p-3 font-semibold text-gray-500">Thành tiền</th>
+   974→   974→              <th className="text-right p-3 font-semibold text-gray-500">Đã thanh toán</th>
+   975→   975→              <th className="text-right p-3 font-semibold text-gray-500">Còn nợ</th>
+   976→   976→              <th className="text-center p-3 font-semibold text-gray-500">Trạng thái</th>
+   977→   977→              <th className="text-center p-3 font-semibold text-gray-500">Thao tác</th>
+   978→   978→            </tr>
+   979→   979→          </thead>
+   980→   980→          <tbody>
+   981→   981→            {bills.map((b, i) => {
+   982→   982→              const debt = (b.amount || 0) - (b.paid || 0);
+   983→   983→              return (
+   984→   984→                <tr key={i} className="border-t hover:bg-gray-50">
+   985→   985→                  <td className="p-3 text-gray-500">{b.billId}</td>
+   986→   986→                  <td className="p-3 font-medium">{b.studentName}</td>
+   987→   987→                  <td className="p-3">{b.className}</td>
+   988→   988→                  <td className="p-3">{b.month}</td>
+   989→   989→                  <td className="p-3 text-center">{b.sessions}</td>
+   990→   990→                  <td className="p-3 text-right">{formatCurrency(b.amount)}</td>
+   991→   991→                  <td className="p-3 text-right">{formatCurrency(b.paid)}</td>
+   992→   992→                  <td className="p-3 text-right font-semibold" style={{ color: debt > 0 ? '#ef4444' : '#22c55e' }}>{formatCurrency(debt)}</td>
+   993→   993→                  <td className="p-3 text-center"><StatusBadge status={b.status} /></td>
+   994→   994→                  <td className="p-3 text-center">
+   995→   995→                    <div className="flex justify-center gap-1">
+   996→   996→                      {b.status !== 'Đã thanh toán' && <button className="p-1 hover:bg-green-100 rounded text-green-600" onClick={() => payBill(b)} title="Thanh toán">💵</button>}
+   997→   997→                      <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteBillItem(b.billId)}><Trash2 size={14} /></button>
+   998→   998→                    </div>
+   999→   999→                  </td>
+
+[showing lines 600-999 of 1507; use offset=1000 with limit to continue reading]

@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id           Int      @id @default(autoincrement())
+  studentId    String   @unique @map("student_id")
+  name         String
+  birthDate    String?  @map("birth_date")
+  gender       String?
+  phone        String?
+  email        String?
+  address      String?
+  className    String?  @map("class_name")
+  registerDate String?  @map("register_date")
+  note         String?
+  status       String   @default("Đang học")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("students")
+}
+
+model Class {
+  id            Int      @id @default(autoincrement())
+  classId       String   @unique @map("class_id")
+  name          String
+  level         String?
+  teacher       String?
+  maxStudents   Int      @default(25) @map("max_students")
+  feePerSession Int      @default(150000) @map("fee_per_session")
+  note          String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("classes")
+}
+
+model Schedule {
+  id          Int      @id @default(autoincrement())
+  scheduleId  String   @unique @map("schedule_id")
+  className   String   @map("class_name")
+  date        String
+  dayOfWeek   String?  @map("day_of_week")
+  startTime   String?  @map("start_time")
+  endTime     String?  @map("end_time")
+  room        String?
+  teacher     String?
+  status      String   @default("Đã lên lịch")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("schedules")
+}
+
+model Attendance {
+  id           Int      @id @default(autoincrement())
+  attendanceId String   @unique @map("attendance_id")
+  studentId    String   @map("student_id")
+  className    String?  @map("class_name")
+  date         String
+  dayOfWeek    String?  @map("day_of_week")
+  status       String?
+  note         String?
+  checkedAt    String?  @map("checked_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("attendance")
+}
+
+model Evaluation {
+  id           Int      @id @default(autoincrement())
+  evaluationId String   @unique @map("evaluation_id")
+  studentId    String   @map("student_id")
+  studentName  String?  @map("student_name")
+  className    String?  @map("class_name")
+  date         String?
+  attendScore  Int?     @map("attend_score")
+  testScore    Int?     @map("test_score")
+  examScore    Int?     @map("exam_score")
+  note         String?
+  grade        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("evaluations")
+}
+
+model Bill {
+  id          Int      @id @default(autoincrement())
+  billId      String   @unique @map("bill_id")
+  studentId   String   @map("student_id")
+  studentName String?  @map("student_name")
+  className   String?  @map("class_name")
+  month       String?
+  sessions    Int?
+  amount      Int?
+  paid        Int      @default(0)
+  payDate     String?  @map("pay_date")
+  status      String   @default("Chưa thanh toán")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("bills")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  userId    String   @unique @map("user_id")
+  username  String
+  password  String
+  fullName  String?  @map("full_name")
+  role      String?
+  email     String?
+  phone     String?
+  status    String   @default("Active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("settings")
+}
