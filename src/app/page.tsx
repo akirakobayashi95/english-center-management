@@ -23,6 +23,12 @@ type DashboardData = {
   studentStats: Array<{ studentId: string; name: string; className: string; present: number; absent: number; excused: number; late: number; total: number; attendanceRate: number }>;
   classes: string[];
 };
+type RevenueData = {
+  stats: { totalAmount: number; totalPaid: number; totalDebt: number; collectionRate: number; billCount: number; paidCount: number; unpaidCount: number; partialCount: number };
+  byMonth: Array<{ month: string; amount: number; paid: number; debt: number; sessions: number }>;
+  byClass: Array<{ className: string; amount: number; paid: number; debt: number; sessions: number; count: number }>;
+  byStatus: Array<{ status: string; count: number; amount: number; paid: number }>;
+};
 
 const LEVELS = ['Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced', 'Proficient'];
 const LEVEL_COLORS: Record<string, string> = {
@@ -58,7 +64,7 @@ const btnSuccess = "px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white font-
 const pageTitles: Record<string, string> = {
   dashboard: 'Tổng quan', students: 'Học sinh', classes: 'Lớp học', schedule: 'Thời khoá biểu',
   attendance: 'Điểm danh', evaluation: 'Đánh giá', grades: 'Điểm số', bills: 'Hoá đơn',
-  users: 'Người dùng', settings: 'Cài đặt',
+  revenue: 'Thống kê doanh thu', users: 'Người dùng', settings: 'Cài đặt',
 };
 
 const navItems = [
@@ -70,6 +76,7 @@ const navItems = [
   { id: 'evaluation', label: 'Đánh giá', icon: Star, section: 'Hoạt động' },
   { id: 'grades', label: 'Điểm số', icon: FileText, section: 'Hoạt động' },
   { id: 'bills', label: 'Hoá đơn', icon: Receipt, section: 'Hoạt động' },
+  { id: 'revenue', label: 'Thống kê doanh thu', icon: TrendingUp, section: 'Tài chính' },
   { id: 'users', label: 'Người dùng', icon: UserCog, section: 'Hệ thống' },
   { id: 'settings', label: 'Cài đặt', icon: Settings, section: 'Hệ thống' },
 ];
@@ -130,6 +137,7 @@ export default function Home() {
   const [bills, setBills] = useState<BillItem[]>([]);
   const [usersList, setUsersList] = useState<UserItem[]>([]);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [quickAttData, setQuickAttData] = useState<Record<string, string>>({});
 
@@ -164,6 +172,8 @@ export default function Home() {
       case 'dashboard': {
         const dRes = await api(`/dashboard?className=${selectedClass}`);
         if (dRes.success) setDashboardData(dRes.data);
+        const rRes = await api(`/revenue?className=${selectedClass}`);
+        if (rRes.success) setRevenueData(rRes.data);
         break;
       }
       case 'students': {
@@ -194,6 +204,13 @@ export default function Home() {
         break;
       }
       case 'bills': {
+        const bRes = await api(`/bills?className=${selectedClass}`);
+        if (bRes.success) setBills(bRes.data);
+        break;
+      }
+      case 'revenue': {
+        const revRes = await api(`/revenue?className=${selectedClass}`);
+        if (revRes.success) setRevenueData(revRes.data);
         const bRes = await api(`/bills?className=${selectedClass}`);
         if (bRes.success) setBills(bRes.data);
         break;
@@ -508,6 +525,7 @@ export default function Home() {
   const renderDashboard = () => {
     if (!dashboardData) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" /></div>;
     const d = dashboardData;
+    const r = revenueData;
     return (
       <div className="space-y-4 lg:space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
@@ -526,6 +544,43 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {/* Revenue summary on Dashboard */}
+        {r && (
+          <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-4 sm:p-6 shadow-sm text-white">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 className="font-bold text-sm sm:text-base flex items-center gap-2"><TrendingUp size={18} /> Thống kê Doanh thu</h3>
+              <button className="text-xs sm:text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg font-semibold transition-colors" onClick={() => setCurrentPage('revenue')}>Chi tiết →</button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-white/15 rounded-lg p-3">
+                <div className="text-xs opacity-90">Tổng doanh thu</div>
+                <div className="text-base sm:text-xl font-bold mt-1 break-all">{formatCurrency(r.stats.totalAmount)}</div>
+              </div>
+              <div className="bg-white/15 rounded-lg p-3">
+                <div className="text-xs opacity-90">Đã thu</div>
+                <div className="text-base sm:text-xl font-bold mt-1 break-all">{formatCurrency(r.stats.totalPaid)}</div>
+              </div>
+              <div className="bg-white/15 rounded-lg p-3">
+                <div className="text-xs opacity-90">Còn nợ</div>
+                <div className="text-base sm:text-xl font-bold mt-1 break-all">{formatCurrency(r.stats.totalDebt)}</div>
+              </div>
+              <div className="bg-white/15 rounded-lg p-3">
+                <div className="text-xs opacity-90">Tỷ lệ thu</div>
+                <div className="text-base sm:text-xl font-bold mt-1">{r.stats.collectionRate}%</div>
+                <div className="w-full h-1.5 bg-white/25 rounded-full overflow-hidden mt-1.5">
+                  <div className="h-full bg-white rounded-full transition-all" style={{ width: `${r.stats.collectionRate}%` }} />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 sm:gap-4 mt-3 text-xs sm:text-sm">
+              <span className="flex items-center gap-1">📄 {r.stats.billCount} hoá đơn</span>
+              <span className="flex items-center gap-1">✅ {r.stats.paidCount} đã thu</span>
+              <span className="flex items-center gap-1">⏳ {r.stats.partialCount} thu một phần</span>
+              <span className="flex items-center gap-1">❌ {r.stats.unpaidCount} chưa thu</span>
+            </div>
+          </div>
+        )}
         <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
           <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm overflow-x-auto">
             <h3 className="font-bold mb-4 text-sm sm:text-base">📈 Tỷ lệ trạng thái</h3>
@@ -1082,6 +1137,208 @@ export default function Home() {
     </div>
   );
 
+  const renderRevenue = () => {
+    if (!revenueData) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" /></div>;
+    const r = revenueData;
+    const maxMonthAmount = Math.max(...r.byMonth.map(m => m.amount), 1);
+    const statusColors: Record<string, string> = {
+      'Đã thanh toán': '#22c55e',
+      'Chưa thanh toán': '#ef4444',
+      'Thanh toán một phần': '#f59e0b',
+    };
+    const totalForStatus = r.byStatus.reduce((s, x) => s + x.count, 0) || 1;
+
+    return (
+      <div className="space-y-4 lg:space-y-6">
+        {/* KPI cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+          {[
+            { icon: '💰', label: 'Tổng doanh thu', value: formatCurrency(r.stats.totalAmount), color: 'bg-amber-100' },
+            { icon: '✅', label: 'Đã thu', value: formatCurrency(r.stats.totalPaid), color: 'bg-green-100' },
+            { icon: '❌', label: 'Còn nợ', value: formatCurrency(r.stats.totalDebt), color: 'bg-red-100' },
+            { icon: '📊', label: 'Tỷ lệ thu', value: `${r.stats.collectionRate}%`, color: 'bg-blue-100' },
+          ].map((s, i) => (
+            <div key={i} className="bg-white rounded-xl p-3 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-sm">
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl ${s.color} flex items-center justify-center text-lg sm:text-2xl flex-shrink-0`}>{s.icon}</div>
+              <div className="min-w-0">
+                <div className="text-sm sm:text-lg font-bold leading-tight break-all">{s.value}</div>
+                <div className="text-xs sm:text-sm text-gray-500 truncate">{s.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Revenue by month chart + status donut */}
+        <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm md:col-span-2 overflow-x-auto">
+            <h3 className="font-bold mb-4 text-sm sm:text-base flex items-center gap-2"><TrendingUp size={18} /> Doanh thu theo tháng</h3>
+            {r.byMonth.length === 0 ? (
+              <p className="text-center text-gray-500 py-10">Chưa có dữ liệu</p>
+            ) : (
+              <div className="min-w-[400px]">
+                <div className="flex items-end gap-3 h-48 pt-4">
+                  {r.byMonth.map((m, i) => {
+                    const heightPct = (m.amount / maxMonthAmount) * 100;
+                    const paidPct = m.amount > 0 ? (m.paid / m.amount) * 100 : 0;
+                    return (
+                      <div key={i} className="flex flex-col items-center gap-1 flex-1">
+                        <div className="text-xs font-semibold text-gray-700">{formatCurrency(m.amount).replace('₫', 'đ')}</div>
+                        <div className="w-full flex flex-col justify-end h-36 relative">
+                          <div className="w-full bg-gray-200 rounded-t overflow-hidden" style={{ height: `${heightPct}%` }}>
+                            <div className="w-full bg-green-500 transition-all" style={{ height: `${paidPct}%` }} />
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-500 whitespace-nowrap">{m.month}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-4 mt-3 text-xs text-gray-500 justify-center">
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500" /> Đã thu</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-200" /> Chưa thu</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+            <h3 className="font-bold mb-4 text-sm sm:text-base">Trạng thái thanh toán</h3>
+            {r.byStatus.length === 0 ? (
+              <p className="text-center text-gray-500 py-10">Chưa có dữ liệu</p>
+            ) : (
+              <div className="flex flex-col items-center gap-4">
+                <svg width="160" height="160" viewBox="0 0 160 160">
+                  {(() => {
+                    let cumulative = 0;
+                    const radius = 60;
+                    const circumference = 2 * Math.PI * radius;
+                    return r.byStatus.map((s, i) => {
+                      const percent = (s.count / totalForStatus) * 100;
+                      const dashArray = `${(percent / 100) * circumference} ${circumference}`;
+                      const dashOffset = -(cumulative / 100) * circumference;
+                      cumulative += percent;
+                      return <circle key={i} cx="80" cy="80" r={radius} fill="none" stroke={statusColors[s.status] || '#94a3b8'} strokeWidth="20" strokeDasharray={dashArray} strokeDashoffset={dashOffset} transform="rotate(-90 80 80)" />;
+                    });
+                  })()}
+                  <text x="80" y="78" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#1e293b">{r.stats.billCount}</text>
+                  <text x="80" y="96" textAnchor="middle" fontSize="11" fill="#64748b">hoá đơn</text>
+                </svg>
+                <div className="flex flex-col gap-2 w-full">
+                  {r.byStatus.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: statusColors[s.status] || '#94a3b8' }} />
+                        <span>{s.status}</span>
+                      </div>
+                      <span className="font-semibold">{s.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Revenue by class table */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="p-5 border-b flex justify-between items-center">
+            <h3 className="font-bold flex items-center gap-2"><DollarSign size={18} /> Doanh thu theo lớp</h3>
+            <div className="flex gap-2">
+              <button className={`${btnSecondary} flex items-center gap-1`} onClick={() => window.print()}><Printer size={14} /> In</button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm min-w-[600px]">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
+                  <th className="text-center p-3 font-semibold text-gray-500">Số HĐ</th>
+                  <th className="text-center p-3 font-semibold text-gray-500">Buổi</th>
+                  <th className="text-right p-3 font-semibold text-gray-500">Tổng doanh thu</th>
+                  <th className="text-right p-3 font-semibold text-gray-500">Đã thu</th>
+                  <th className="text-right p-3 font-semibold text-gray-500">Còn nợ</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Tỷ lệ thu</th>
+                </tr>
+              </thead>
+              <tbody>
+                {r.byClass.map((c, i) => {
+                  const rate = c.amount > 0 ? Math.round((c.paid / c.amount) * 100) : 0;
+                  return (
+                    <tr key={i} className="border-t hover:bg-gray-50">
+                      <td className="p-3 font-medium">{c.className}</td>
+                      <td className="p-3 text-center">{c.count}</td>
+                      <td className="p-3 text-center">{c.sessions}</td>
+                      <td className="p-3 text-right font-semibold">{formatCurrency(c.amount)}</td>
+                      <td className="p-3 text-right text-green-600">{formatCurrency(c.paid)}</td>
+                      <td className="p-3 text-right text-red-600">{formatCurrency(c.debt)}</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${rate}%`, backgroundColor: rate >= 80 ? '#22c55e' : rate >= 50 ? '#f59e0b' : '#ef4444' }} />
+                          </div>
+                          <span className="text-xs font-semibold" style={{ color: rate >= 80 ? '#22c55e' : rate >= 50 ? '#f59e0b' : '#ef4444' }}>{rate}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {r.byClass.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
+              </tbody>
+              {r.byClass.length > 0 && (
+                <tfoot>
+                  <tr className="bg-amber-50 font-bold">
+                    <td className="p-3">Tổng cộng</td>
+                    <td className="p-3 text-center">{r.stats.billCount}</td>
+                    <td className="p-3 text-center">{r.byClass.reduce((s, c) => s + c.sessions, 0)}</td>
+                    <td className="p-3 text-right">{formatCurrency(r.stats.totalAmount)}</td>
+                    <td className="p-3 text-right text-green-700">{formatCurrency(r.stats.totalPaid)}</td>
+                    <td className="p-3 text-right text-red-700">{formatCurrency(r.stats.totalDebt)}</td>
+                    <td className="p-3 text-amber-700">{r.stats.collectionRate}%</td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </div>
+
+        {/* Recent bills */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="p-5 border-b flex justify-between items-center">
+            <h3 className="font-bold">📋 Hoá đơn gần đây</h3>
+            <button className={`${btnSecondary} text-xs`} onClick={() => setCurrentPage('bills')}>Xem tất cả →</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm min-w-[600px]">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Tháng</th>
+                  <th className="text-right p-3 font-semibold text-gray-500">Thành tiền</th>
+                  <th className="text-right p-3 font-semibold text-gray-500">Đã thu</th>
+                  <th className="text-center p-3 font-semibold text-gray-500">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bills.slice(0, 8).map((b, i) => (
+                  <tr key={i} className="border-t hover:bg-gray-50">
+                    <td className="p-3 font-medium">{b.studentName}</td>
+                    <td className="p-3">{b.className}</td>
+                    <td className="p-3">{b.month}</td>
+                    <td className="p-3 text-right">{formatCurrency(b.amount)}</td>
+                    <td className="p-3 text-right text-green-600">{formatCurrency(b.paid)}</td>
+                    <td className="p-3 text-center"><StatusBadge status={b.status} /></td>
+                  </tr>
+                ))}
+                {bills.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard': return renderDashboard();
@@ -1092,6 +1349,7 @@ export default function Home() {
       case 'evaluation': return renderEvaluations();
       case 'grades': return renderGrades();
       case 'bills': return renderBills();
+      case 'revenue': return renderRevenue();
       case 'users': return renderUsers();
       case 'settings': return renderSettings();
       default: return renderDashboard();
