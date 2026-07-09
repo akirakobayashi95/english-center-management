@@ -17,7 +17,7 @@ type AttendanceItem = { id: number; attendanceId: string; studentId: string; cla
 type EvaluationItem = { id: number; evaluationId: string; studentId: string; studentName: string; className: string; month: string; note: string };
 type BillItem = { id: number; billId: string; studentId: string; studentName: string; className: string; month: string; sessions: number; amount: number; paid: number; payDate: string | null; status: string };
 type UserItem = { id: number; userId: string; username: string; password: string; fullName: string; role: string; email: string; phone: string; status: string };
-type ProspectItem = { id: number; prospectId: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string };
+type ProspectItem = { id: number; prospectId: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gender: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string; linkedStudentId: string | null };
 type DashboardData = {
   stats: { totalPresent: number; totalAbsent: number; totalExcused: number; totalLate: number; totalAttendance: number; presentRate: number };
   dailyStats: Record<string, { present: number; absent: number; excused: number; late: number }>;
@@ -126,8 +126,8 @@ const emptyBill: BillForm = { studentId: '', studentName: '', className: '', mon
 type UserForm = { userId?: string; username: string; password: string; fullName: string; role: string; email: string; phone: string; status: string };
 const emptyUser: UserForm = { username: '', password: '', fullName: '', role: 'Giáo viên', email: '', phone: '', status: 'Active' };
 
-type ProspectForm = { prospectId?: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string };
-const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: '', studentName: '', gradeAge: '', desiredTime: '', testStatus: 'Chưa test', suggestedClass: '', note: '', status: 'Đang chờ' };
+type ProspectForm = { prospectId?: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gender: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string };
+const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: '', studentName: '', gender: 'Nam', gradeAge: '', desiredTime: '', testStatus: 'Chưa test', suggestedClass: '', note: '', status: 'Đang chờ' };
 
 export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -463,14 +463,14 @@ export default function Home() {
     if (!d.studentName) { showToast('Vui lòng nhập tên học sinh!', 'error'); return; }
     if (!d.contactDate) { showToast('Vui lòng chọn ngày liên hệ!', 'error'); return; }
     setLoading(true);
-    const res = await api('/prospects', { method: 'POST', body: JSON.stringify({ prospectId: d.prospectId || null, contactDate: d.contactDate, parentZalo: d.parentZalo, phone: d.phone, studentName: d.studentName, gradeAge: d.gradeAge, desiredTime: d.desiredTime, testStatus: d.testStatus, suggestedClass: d.suggestedClass, note: d.note, status: d.status }) });
+    const res = await api('/prospects', { method: 'POST', body: JSON.stringify({ prospectId: d.prospectId || null, contactDate: d.contactDate, parentZalo: d.parentZalo, phone: d.phone, studentName: d.studentName, gender: d.gender, gradeAge: d.gradeAge, desiredTime: d.desiredTime, testStatus: d.testStatus, suggestedClass: d.suggestedClass, note: d.note, status: d.status }) });
     setLoading(false);
     if (res.success) { showToast(res.message); setProspectModal({ open: false, editing: false, data: { ...emptyProspect } }); loadData('admission'); }
     else showToast(res.message, 'error');
   };
 
   const editProspectItem = (p: ProspectItem) => {
-    setProspectModal({ open: true, editing: true, data: { prospectId: p.prospectId, contactDate: p.contactDate, parentZalo: p.parentZalo, phone: p.phone, studentName: p.studentName, gradeAge: p.gradeAge, desiredTime: p.desiredTime, testStatus: p.testStatus, suggestedClass: p.suggestedClass, note: p.note, status: p.status } });
+    setProspectModal({ open: true, editing: true, data: { prospectId: p.prospectId, contactDate: p.contactDate, parentZalo: p.parentZalo, phone: p.phone, studentName: p.studentName, gender: p.gender, gradeAge: p.gradeAge, desiredTime: p.desiredTime, testStatus: p.testStatus, suggestedClass: p.suggestedClass, note: p.note, status: p.status } });
   };
 
   const deleteProspectItem = async (id: string) => {
@@ -480,7 +480,43 @@ export default function Home() {
   };
 
   const changeProspectStatus = async (p: ProspectItem, newStatus: string) => {
-    const res = await api('/prospects', { method: 'POST', body: JSON.stringify({ prospectId: p.prospectId, contactDate: p.contactDate, parentZalo: p.parentZalo, phone: p.phone, studentName: p.studentName, gradeAge: p.gradeAge, desiredTime: p.desiredTime, testStatus: p.testStatus, suggestedClass: p.suggestedClass, note: p.note, status: newStatus }) });
+    setLoading(true);
+    // Nếu chuyển sang "Đã nhập học" và chưa liên kết HS → tạo Student mới và đồng bộ dữ liệu
+    if (newStatus === 'Đã nhập học' && !p.linkedStudentId) {
+      // Tạo học sinh mới từ hồ sơ tuyển sinh
+      const studentRes = await api('/students', { method: 'POST', body: JSON.stringify({
+        name: p.studentName,
+        gender: p.gender || 'Nam',
+        phone: p.phone || '',
+        parentZalo: p.parentZalo || '',
+        address: '',
+        className: p.suggestedClass || '',
+        note: `Đồng bộ từ hồ sơ tuyển sinh ${p.prospectId}${p.note ? ': ' + p.note : ''}`,
+        status: 'Đang học',
+      }) });
+      if (studentRes.success) {
+        // Lấy studentId mới tạo (load lại danh sách để tìm)
+        const sRes = await api(`/students?className=${p.suggestedClass || ''}&search=${encodeURIComponent(p.studentName || '')}`);
+        let newStudentId = '';
+        if (sRes.success && Array.isArray(sRes.data)) {
+          const found = sRes.data.find((s: Student) => s.name === p.studentName && s.className === (p.suggestedClass || ''));
+          if (found) newStudentId = found.studentId;
+        }
+        // Cập nhật prospect: status + linkedStudentId
+        await api('/prospects', { method: 'POST', body: JSON.stringify({ prospectId: p.prospectId, contactDate: p.contactDate, parentZalo: p.parentZalo, phone: p.phone, studentName: p.studentName, gender: p.gender, gradeAge: p.gradeAge, desiredTime: p.desiredTime, testStatus: p.testStatus, suggestedClass: p.suggestedClass, note: p.note, status: newStatus, linkedStudentId: newStudentId }) });
+        setLoading(false);
+        showToast(`Đã nhập học! Học sinh mới được tạo (Mã: ${newStudentId || 'Sxxx'})`);
+        loadData('admission');
+        return;
+      } else {
+        setLoading(false);
+        showToast('Không thể tạo học sinh mới!', 'error');
+        return;
+      }
+    }
+    // Trường hợp khác: chỉ cập nhật status
+    const res = await api('/prospects', { method: 'POST', body: JSON.stringify({ prospectId: p.prospectId, contactDate: p.contactDate, parentZalo: p.parentZalo, phone: p.phone, studentName: p.studentName, gender: p.gender, gradeAge: p.gradeAge, desiredTime: p.desiredTime, testStatus: p.testStatus, suggestedClass: p.suggestedClass, note: p.note, status: newStatus, linkedStudentId: p.linkedStudentId }) });
+    setLoading(false);
     if (res.success) { showToast('Đã chuyển trạng thái!'); loadData('admission'); }
   };
 
@@ -1400,6 +1436,7 @@ export default function Home() {
                   <th className="text-left p-3 font-semibold text-gray-500">Tên Zalo PH</th>
                   <th className="text-left p-3 font-semibold text-gray-500">SĐT</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Tên HS</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Giới tính</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Khối/Lớp/Tuổi</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Giờ mong muốn</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Test đầu vào</th>
@@ -1412,9 +1449,10 @@ export default function Home() {
                 {filtered.map((p, i) => (
                   <tr key={i} className="border-t hover:bg-gray-50">
                     <td className="p-3 whitespace-nowrap">{formatDate(p.contactDate)}</td>
-                    <td className="p-3 font-medium">{p.parentZalo}</td>
+                    <td className="p-3 font-medium">{p.parentZalo || '-'}</td>
                     <td className="p-3 whitespace-nowrap">{p.phone || '-'}</td>
                     <td className="p-3 font-medium">{p.studentName}</td>
+                    <td className="p-3">{p.gender || '-'}</td>
                     <td className="p-3">{p.gradeAge || '-'}</td>
                     <td className="p-3 text-xs">{p.desiredTime || '-'}</td>
                     <td className="p-3 text-center">
@@ -1426,17 +1464,20 @@ export default function Home() {
                       <div className="flex justify-center gap-1 flex-wrap">
                         <button className="p-1 hover:bg-amber-100 rounded text-amber-600" onClick={() => editProspectItem(p)} title="Sửa"><Edit size={14} /></button>
                         {p.status === 'Đang chờ' && (
-                          <button className="p-1 hover:bg-green-100 rounded text-green-600 text-xs font-semibold" onClick={() => changeProspectStatus(p, 'Đã nhập học')} title="Chuyển sang đã nhập học">✓</button>
+                          <button className="p-1 hover:bg-green-100 rounded text-green-600 text-xs font-semibold" onClick={() => changeProspectStatus(p, 'Đã nhập học')} title="Chuyển sang đã nhập học - tạo HS mới">✓</button>
                         )}
                         {p.status === 'Đang chờ' && (
                           <button className="p-1 hover:bg-red-100 rounded text-red-600 text-xs font-semibold" onClick={() => changeProspectStatus(p, 'Không nhập học')} title="Chuyển sang không nhập học">✗</button>
+                        )}
+                        {p.linkedStudentId && (
+                          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-semibold" title={`Đã liên kết HS: ${p.linkedStudentId}`}>{p.linkedStudentId}</span>
                         )}
                         <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteProspectItem(p.prospectId)} title="Xóa"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {filtered.length === 0 && <tr><td colSpan={10} className="p-8 text-center text-gray-400">Chưa có hồ sơ nào. Bấm "Thêm HS chờ" để tạo mới.</td></tr>}
+                {filtered.length === 0 && <tr><td colSpan={11} className="p-8 text-center text-gray-400">Chưa có hồ sơ nào. Bấm "Thêm HS chờ" để tạo mới.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -1468,19 +1509,27 @@ export default function Home() {
           </FormField>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField label="Giới tính">
+            <select className={selectClass} value={d.gender} onChange={e => setD({ gender: e.target.value })}>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+            </select>
+          </FormField>
           <FormField label="Khối/Lớp/Tuổi">
             <input className={inputClass} value={d.gradeAge} onChange={e => setD({ gradeAge: e.target.value })} placeholder="VD: Lớp 6 / 11 tuổi" />
           </FormField>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Giờ học mong muốn">
             <input className={inputClass} value={d.desiredTime} onChange={e => setD({ desiredTime: e.target.value })} placeholder="VD: T2-T4-T6 18:00-19:30" />
           </FormField>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Test đầu vào">
             <select className={selectClass} value={d.testStatus} onChange={e => setD({ testStatus: e.target.value })}>
               {TEST_STATUS_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </FormField>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Lớp ghép khả thi">
             <select className={selectClass} value={d.suggestedClass} onChange={e => setD({ suggestedClass: e.target.value })}>
               <option value="">-- Chưa xác định --</option>

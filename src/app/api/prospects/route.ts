@@ -21,12 +21,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { prospectId, contactDate, parentZalo, phone, studentName, gradeAge, desiredTime, testStatus, suggestedClass, note, status } = body;
+    const { prospectId, contactDate, parentZalo, phone, studentName, gender, gradeAge, desiredTime, testStatus, suggestedClass, note, status, linkedStudentId } = body;
 
     if (prospectId) {
+      const updateData: any = { contactDate, parentZalo, phone, studentName, gender, gradeAge, desiredTime, testStatus, suggestedClass, note, status };
+      if (linkedStudentId !== undefined) updateData.linkedStudentId = linkedStudentId;
       await db.prospect.update({
         where: { prospectId },
-        data: { contactDate, parentZalo, phone, studentName, gradeAge, desiredTime, testStatus, suggestedClass, note, status },
+        data: updateData,
       });
       return NextResponse.json({ success: true, message: 'Cập nhật thành công!' });
     }
@@ -41,6 +43,7 @@ export async function POST(req: NextRequest) {
         parentZalo: parentZalo || '',
         phone: phone || '',
         studentName: studentName || '',
+        gender: gender || '',
         gradeAge: gradeAge || '',
         desiredTime: desiredTime || '',
         testStatus: testStatus || 'Chưa test',

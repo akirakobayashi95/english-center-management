@@ -93,12 +93,14 @@ model Prospect {
   parentZalo     String?  @map("parent_zalo")
   phone          String?
   studentName    String?  @map("student_name")
+  gender         String?
   gradeAge       String?  @map("grade_age")
   desiredTime    String?  @map("desired_time")
   testStatus     String?  @map("test_status")
   suggestedClass String?  @map("suggested_class")
   note           String?
   status         String   @default("Đang chờ")
+  linkedStudentId String? @map("linked_student_id")
   createdAt      DateTime @default(now()) @map("created_at")
 
   @@map("prospects")
