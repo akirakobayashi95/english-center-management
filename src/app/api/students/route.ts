@@ -23,12 +23,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { studentId, name, birthDate, gender, phone, email, address, className, registerDate, note, status } = body;
+    const { studentId, name, birthDate, gender, phone, parentZalo, address, className, registerDate, note, status } = body;
 
     if (studentId) {
       await db.student.update({
         where: { studentId },
-        data: { name, birthDate, gender, phone, email, address, className, note, status },
+        data: { name, birthDate, gender, phone, parentZalo, address, className, note, status },
       });
       return NextResponse.json({ success: true, message: 'Cập nhật thành công!' });
     }
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         birthDate: birthDate || new Date().toISOString().split('T')[0],
         gender: gender || 'Nam',
         phone: phone || '',
-        email: email || '',
+        parentZalo: parentZalo || '',
         address: address || '',
         className: className || '',
         registerDate: registerDate || new Date().toISOString().split('T')[0],

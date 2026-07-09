@@ -10,7 +10,7 @@ import {
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO, isSameDay } from 'date-fns';
 
 // Types
-type Student = { id: number; studentId: string; name: string; birthDate: string | null; gender: string; phone: string; email: string; address: string; className: string; registerDate: string; note: string; status: string };
+type Student = { id: number; studentId: string; name: string; birthDate: string | null; gender: string; phone: string; parentZalo: string; address: string; className: string; registerDate: string; note: string; status: string };
 type ClassItem = { id: number; classId: string; name: string; level: string; teacher: string; maxStudents: number; feePerSession: number; note: string };
 type ScheduleItem = { id: number; scheduleId: string; className: string; date: string; dayOfWeek: string; startTime: string; endTime: string; room: string; teacher: string; status: string };
 type AttendanceItem = { id: number; attendanceId: string; studentId: string; className: string; date: string; dayOfWeek: string; status: string; note: string };
@@ -108,8 +108,8 @@ const getDayOfWeek = (dateStr: string) => {
   return days[parseISO(dateStr).getDay()];
 };
 
-type StudentForm = { studentId?: string; name: string; birthDate: string; gender: string; phone: string; email: string; address: string; className: string; note: string; status: string };
-const emptyStudent: StudentForm = { name: '', birthDate: '', gender: 'Nam', phone: '', email: '', address: '', className: '', note: '', status: 'Đang học' };
+type StudentForm = { studentId?: string; name: string; birthDate: string; gender: string; phone: string; parentZalo: string; address: string; className: string; note: string; status: string };
+const emptyStudent: StudentForm = { name: '', birthDate: '', gender: 'Nam', phone: '', parentZalo: '', address: '', className: '', note: '', status: 'Đang học' };
 
 type ClassForm = { classId?: string; name: string; level: string; teacher: string; maxStudents: number; feePerSession: number; note: string };
 const emptyClass: ClassForm = { name: '', level: 'Beginner', teacher: '', maxStudents: 25, feePerSession: 150000, note: '' };
@@ -286,7 +286,7 @@ export default function Home() {
     const d = studentModal.data;
     if (!d.name || !d.className) { showToast('Vui lòng nhập họ tên và chọn lớp!', 'error'); return; }
     setLoading(true);
-    const res = await api('/students', { method: 'POST', body: JSON.stringify({ studentId: d.studentId || null, name: d.name, birthDate: d.birthDate, gender: d.gender, phone: d.phone, email: d.email, address: d.address, className: d.className, note: d.note, status: d.status }) });
+    const res = await api('/students', { method: 'POST', body: JSON.stringify({ studentId: d.studentId || null, name: d.name, birthDate: d.birthDate, gender: d.gender, phone: d.phone, parentZalo: d.parentZalo, address: d.address, className: d.className, note: d.note, status: d.status }) });
     setLoading(false);
     if (res.success) { showToast(res.message); setStudentModal({ ...studentModal, open: false }); loadData('students'); }
     else showToast(res.message, 'error');
@@ -725,8 +725,8 @@ export default function Home() {
               <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">Họ tên</th>
               <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden sm:table-cell">Ngày sinh</th>
               <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden md:table-cell">Giới tính</th>
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden lg:table-cell">SĐT</th>
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden lg:table-cell">Email</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden lg:table-cell">Tên Zalo PH</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden lg:table-cell">SĐT (nếu có)</th>
               <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">Lớp</th>
               <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">Trạng thái</th>
               <th className="text-center p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm"></th>
@@ -739,13 +739,13 @@ export default function Home() {
                 <td className="p-3 font-medium">{s.name}</td>
                 <td className="p-3">{formatDate(s.birthDate)}</td>
                 <td className="p-3">{s.gender}</td>
-                <td className="p-3">{s.phone}</td>
-                <td className="p-3">{s.email}</td>
+                <td className="p-3">{s.parentZalo || '-'}</td>
+                <td className="p-3">{s.phone || '-'}</td>
                 <td className="p-3">{s.className}</td>
                 <td className="p-3"><StatusBadge status={s.status} /></td>
                 <td className="p-3 text-center">
                   <div className="flex justify-center gap-1">
-                    <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setStudentModal({ open: true, editing: true, data: { studentId: s.studentId, name: s.name, birthDate: s.birthDate || '', gender: s.gender, phone: s.phone, email: s.email, address: s.address, className: s.className, note: s.note, status: s.status } })}><Edit size={14} /></button>
+                    <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setStudentModal({ open: true, editing: true, data: { studentId: s.studentId, name: s.name, birthDate: s.birthDate || '', gender: s.gender, phone: s.phone, parentZalo: s.parentZalo, address: s.address, className: s.className, note: s.note, status: s.status } })}><Edit size={14} /></button>
                     <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteStudent(s.studentId)}><Trash2 size={14} /></button>
                   </div>
                 </td>
@@ -1557,9 +1557,9 @@ export default function Home() {
               <option value="Nam">Nam</option><option value="Nữ">Nữ</option>
             </select>
           </FormField>
-          <FormField label="SĐT"><input className={inputClass} value={d.phone} onChange={e => setD({ phone: e.target.value })} placeholder="09xxxxxxxx" /></FormField>
+          <FormField label="Tên Zalo PH"><input className={inputClass} value={d.parentZalo} onChange={e => setD({ parentZalo: e.target.value })} placeholder="Tên Zalo phụ huynh" /></FormField>
+          <FormField label="SĐT (nếu có)"><input className={inputClass} value={d.phone} onChange={e => setD({ phone: e.target.value })} placeholder="09xxxxxxxx" /></FormField>
         </div>
-        <FormField label="Email"><input type="email" className={inputClass} value={d.email} onChange={e => setD({ email: e.target.value })} placeholder="email@example.com" /></FormField>
         <FormField label="Địa chỉ"><input className={inputClass} value={d.address} onChange={e => setD({ address: e.target.value })} placeholder="Nhập địa chỉ" /></FormField>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Lớp *">
