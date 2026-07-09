@@ -6,9 +6,11 @@ export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
     const className = searchParams.get('className') || '';
+    const month = searchParams.get('month') || '';
 
     const where: Prisma.EvaluationWhereInput = {};
     if (className) where.className = className;
+    if (month) where.month = month;
 
     const result = await db.evaluation.findMany({ where, orderBy: { id: 'asc' } });
     return NextResponse.json({ success: true, data: result });
@@ -21,12 +23,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { evaluationId, studentId, studentName, className, date, attendScore, testScore, examScore, note, grade } = body;
+    const { evaluationId, studentId, studentName, className, month, note } = body;
 
     if (evaluationId) {
       await db.evaluation.update({
         where: { evaluationId },
-        data: { attendScore, testScore, examScore, note, grade },
+        data: { studentId, studentName, className, month, note },
       });
       return NextResponse.json({ success: true, message: 'Cập nhật thành công!' });
     }
@@ -40,12 +42,8 @@ export async function POST(req: NextRequest) {
         studentId,
         studentName,
         className,
-        date: date || new Date().toISOString().split('T')[0],
-        attendScore,
-        testScore,
-        examScore,
+        month: month || '',
         note: note || '',
-        grade,
       },
     });
 

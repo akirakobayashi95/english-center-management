@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   LayoutDashboard, Users, School, Calendar, CheckSquare,
-  Star, FileText, Receipt, UserCog, Settings, LogOut,
+  Star, Receipt, UserCog, Settings, LogOut,
   Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight,
   Menu, X, Printer, Download, DollarSign, TrendingUp
 } from 'lucide-react';
@@ -14,7 +14,7 @@ type Student = { id: number; studentId: string; name: string; birthDate: string 
 type ClassItem = { id: number; classId: string; name: string; level: string; teacher: string; maxStudents: number; feePerSession: number; note: string };
 type ScheduleItem = { id: number; scheduleId: string; className: string; date: string; dayOfWeek: string; startTime: string; endTime: string; room: string; teacher: string; status: string };
 type AttendanceItem = { id: number; attendanceId: string; studentId: string; className: string; date: string; dayOfWeek: string; status: string; note: string };
-type EvaluationItem = { id: number; evaluationId: string; studentId: string; studentName: string; className: string; date: string; attendScore: number; testScore: number; examScore: number; note: string; grade: string };
+type EvaluationItem = { id: number; evaluationId: string; studentId: string; studentName: string; className: string; month: string; note: string };
 type BillItem = { id: number; billId: string; studentId: string; studentName: string; className: string; month: string; sessions: number; amount: number; paid: number; payDate: string | null; status: string };
 type UserItem = { id: number; userId: string; username: string; password: string; fullName: string; role: string; email: string; phone: string; status: string };
 type DashboardData = {
@@ -52,7 +52,6 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; icon: string }> 
   'Chưa thanh toán': { bg: 'bg-red-100', text: 'text-red-700', icon: '' },
   'Thanh toán một phần': { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: '' },
 };
-const GRADE_COLORS: Record<string, string> = { 'Giỏi': '#22c55e', 'Khá': '#3b82f6', 'Trung bình': '#f59e0b', 'Yếu': '#ef4444' };
 
 const inputClass = "w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-amber-500 outline-none text-sm";
 const selectClass = "w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-amber-500 outline-none text-sm bg-white";
@@ -63,7 +62,7 @@ const btnSuccess = "px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white font-
 
 const pageTitles: Record<string, string> = {
   dashboard: 'Tổng quan', students: 'Học sinh', classes: 'Lớp học', schedule: 'Thời khoá biểu',
-  attendance: 'Điểm danh', evaluation: 'Đánh giá', grades: 'Điểm số', bills: 'Hoá đơn',
+  attendance: 'Điểm danh', evaluation: 'Đánh giá Học sinh', bills: 'Hoá đơn',
   revenue: 'Thống kê doanh thu', users: 'Người dùng', settings: 'Cài đặt',
 };
 
@@ -73,8 +72,7 @@ const navItems = [
   { id: 'classes', label: 'Lớp học', icon: School, section: 'Quản lý' },
   { id: 'schedule', label: 'Thời khoá biểu', icon: Calendar, section: 'Quản lý' },
   { id: 'attendance', label: 'Điểm danh', icon: CheckSquare, section: 'Hoạt động' },
-  { id: 'evaluation', label: 'Đánh giá', icon: Star, section: 'Hoạt động' },
-  { id: 'grades', label: 'Điểm số', icon: FileText, section: 'Hoạt động' },
+  { id: 'evaluation', label: 'Đánh giá Học sinh', icon: Star, section: 'Hoạt động' },
   { id: 'bills', label: 'Hoá đơn', icon: Receipt, section: 'Hoạt động' },
   { id: 'revenue', label: 'Thống kê doanh thu', icon: TrendingUp, section: 'Tài chính' },
   { id: 'users', label: 'Người dùng', icon: UserCog, section: 'Hệ thống' },
@@ -105,8 +103,8 @@ const emptyClass: ClassForm = { name: '', level: 'Beginner', teacher: '', maxStu
 type ScheduleForm = { className: string; date: string; startTime: string; endTime: string; room: string; teacher: string };
 const emptySchedule: ScheduleForm = { className: '', date: '', startTime: '18:00', endTime: '19:30', room: '', teacher: '' };
 
-type EvaluationForm = { studentId: string; studentName: string; className: string; date: string; attendScore: number; testScore: number; examScore: number; note: string };
-const emptyEvaluation: EvaluationForm = { studentId: '', studentName: '', className: '', date: '', attendScore: 85, testScore: 80, examScore: 85, note: '' };
+type EvaluationForm = { evaluationId?: string; studentId: string; studentName: string; className: string; month: string; note: string };
+const emptyEvaluation: EvaluationForm = { studentId: '', studentName: '', className: '', month: '', note: '' };
 
 type BillForm = { studentId: string; studentName: string; className: string; month: string; sessions: number; amount: number; paid: number; payDate: string; status: string };
 const emptyBill: BillForm = { studentId: '', studentName: '', className: '', month: '', sessions: 0, amount: 0, paid: 0, payDate: '', status: 'Chưa thanh toán' };
@@ -127,6 +125,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [scheduleMonth, setScheduleMonth] = useState(new Date());
   const [attendanceMonth, setAttendanceMonth] = useState(new Date());
+  const [evaluationMonth, setEvaluationMonth] = useState(new Date());
 
   // Data
   const [students, setStudents] = useState<Student[]>([]);
@@ -146,7 +145,7 @@ export default function Home() {
   const [classModal, setClassModal] = useState({ open: false, editing: false, data: { ...emptyClass } as ClassForm });
   const [scheduleModal, setScheduleModal] = useState({ open: false, data: { ...emptySchedule } as ScheduleForm });
   const [quickAttModal, setQuickAttModal] = useState(false);
-  const [evaluationModal, setEvaluationModal] = useState({ open: false, data: { ...emptyEvaluation } as EvaluationForm });
+  const [evaluationModal, setEvaluationModal] = useState({ open: false, editing: false, data: { ...emptyEvaluation } as EvaluationForm });
   const [billModal, setBillModal] = useState({ open: false, data: { ...emptyBill } as BillForm });
   const [userModal, setUserModal] = useState({ open: false, editing: false, data: { ...emptyUser } as UserForm });
   const [attCellModal, setAttCellModal] = useState({ open: false, date: '', studentId: '', status: '', note: '' });
@@ -198,9 +197,12 @@ export default function Home() {
         if (attRes.success) setAttendance(attRes.data);
         break;
       }
-      case 'evaluation': case 'grades': {
-        const eRes = await api(`/evaluations?className=${selectedClass}`);
+      case 'evaluation': {
+        const monthStr = format(evaluationMonth, 'MM/yyyy');
+        const eRes = await api(`/evaluations?className=${selectedClass}&month=${monthStr}`);
         if (eRes.success) setEvaluations(eRes.data);
+        const sRes = await api(`/students?className=${selectedClass}&search=`);
+        if (sRes.success) setStudents(sRes.data);
         break;
       }
       case 'bills': {
@@ -226,7 +228,7 @@ export default function Home() {
         break;
       }
     }
-  }, [currentPage, selectedClass, scheduleMonth, attendanceMonth, searchTerm]);
+  }, [currentPage, selectedClass, scheduleMonth, attendanceMonth, evaluationMonth, searchTerm]);
 
   useEffect(() => {
     // Data loaders are async; setState happens after fetch resolves (not synchronously)
@@ -237,7 +239,7 @@ export default function Home() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (loggedIn) loadData();
-  }, [currentPage, selectedClass, scheduleMonth, attendanceMonth, loadData]);
+  }, [currentPage, selectedClass, scheduleMonth, attendanceMonth, evaluationMonth, loadData]);
 
   useEffect(() => {
     if (currentPage === 'students' && loggedIn) {
@@ -323,12 +325,11 @@ export default function Home() {
   const saveEvaluationItem = async () => {
     const d = evaluationModal.data;
     if (!d.studentId) { showToast('Vui lòng chọn học sinh!', 'error'); return; }
-    const total = Math.round(d.attendScore * 0.3 + d.testScore * 0.3 + d.examScore * 0.4);
-    const grade = total >= 90 ? 'Giỏi' : total >= 75 ? 'Khá' : total >= 60 ? 'Trung bình' : 'Yếu';
+    if (!d.month) { showToast('Vui lòng chọn tháng!', 'error'); return; }
     setLoading(true);
-    const res = await api('/evaluations', { method: 'POST', body: JSON.stringify({ ...d, grade }) });
+    const res = await api('/evaluations', { method: 'POST', body: JSON.stringify({ evaluationId: d.evaluationId || null, studentId: d.studentId, studentName: d.studentName, className: d.className, month: d.month, note: d.note }) });
     setLoading(false);
-    if (res.success) { showToast(res.message); setEvaluationModal({ open: false, data: { ...emptyEvaluation } }); loadData('evaluation'); }
+    if (res.success) { showToast(res.message); setEvaluationModal({ open: false, editing: false, data: { ...emptyEvaluation } }); loadData('evaluation'); }
     else showToast(res.message, 'error');
   };
 
@@ -336,6 +337,14 @@ export default function Home() {
     if (!confirm('Xóa đánh giá này?')) return;
     const res = await api('/evaluations', { method: 'DELETE', body: JSON.stringify({ evaluationId: id }) });
     if (res.success) { showToast(res.message); loadData('evaluation'); }
+  };
+
+  const editEvaluationItem = (e: EvaluationItem) => {
+    setEvaluationModal({
+      open: true,
+      editing: true,
+      data: { evaluationId: e.evaluationId, studentId: e.studentId, studentName: e.studentName, className: e.className, month: e.month, note: e.note },
+    });
   };
 
   const saveBillItem = async () => {
@@ -908,11 +917,24 @@ export default function Home() {
 
   const renderEvaluations = () => (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-5 border-b flex justify-between items-center">
-        <h3 className="font-bold">⭐ Đánh giá Học sinh</h3>
-        <button className={`${btnPrimary} flex items-center gap-1`} onClick={() => setEvaluationModal({ open: true, data: { ...emptyEvaluation, date: new Date().toISOString().split('T')[0] } })}>
-          <Plus size={14} /> Thêm đánh giá
-        </button>
+      <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h3 className="font-bold text-sm sm:text-base">⭐ Đánh giá Học sinh</h3>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setEvaluationMonth(new Date(evaluationMonth.getFullYear(), evaluationMonth.getMonth() - 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronLeft size={16} /></button>
+            <span className="text-sm font-semibold whitespace-nowrap">{format(evaluationMonth, 'MM/yyyy')}</span>
+            <button onClick={() => setEvaluationMonth(new Date(evaluationMonth.getFullYear(), evaluationMonth.getMonth() + 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronRight size={16} /></button>
+          </div>
+        </div>
+        <div className="flex gap-2 flex-wrap items-center">
+          <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className={`${selectClass} flex-1 min-w-[140px] text-xs sm:text-sm`}>
+            <option value="">Tất cả lớp</option>
+            {classes.map(c => <option key={c.classId} value={c.name}>{c.name}</option>)}
+          </select>
+          <button className={`${btnPrimary} flex items-center gap-1 text-xs sm:text-sm`} onClick={() => setEvaluationModal({ open: true, editing: false, data: { ...emptyEvaluation, month: format(evaluationMonth, 'MM/yyyy') } })}>
+            <Plus size={14} /> <span className="hidden sm:inline">Thêm đánh giá</span><span className="sm:hidden">Thêm</span>
+          </button>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm min-w-[600px]">
@@ -921,12 +943,8 @@ export default function Home() {
               <th className="text-left p-3 font-semibold text-gray-500">ID</th>
               <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
               <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
-              <th className="text-left p-3 font-semibold text-gray-500">Ngày</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Chuyên cần</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Kiểm tra</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Thi</th>
+              <th className="text-left p-3 font-semibold text-gray-500">Tháng</th>
               <th className="text-left p-3 font-semibold text-gray-500">Nhận xét</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Xếp loại</th>
               <th className="text-center p-3 font-semibold text-gray-500">Thao tác</th>
             </tr>
           </thead>
@@ -936,62 +954,17 @@ export default function Home() {
                 <td className="p-3 text-gray-500">{e.evaluationId}</td>
                 <td className="p-3 font-medium">{e.studentName}</td>
                 <td className="p-3">{e.className}</td>
-                <td className="p-3">{formatDate(e.date)}</td>
-                <td className="p-3 text-center">{e.attendScore}</td>
-                <td className="p-3 text-center">{e.testScore}</td>
-                <td className="p-3 text-center">{e.examScore}</td>
-                <td className="p-3 text-xs max-w-[200px] truncate">{e.note}</td>
-                <td className="p-3 text-center font-semibold" style={{ color: GRADE_COLORS[e.grade] || '#64748b' }}>{e.grade}</td>
+                <td className="p-3 whitespace-nowrap">{e.month}</td>
+                <td className="p-3 text-xs max-w-[320px]">{e.note}</td>
                 <td className="p-3 text-center">
-                  <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteEvaluationItem(e.evaluationId)}><Trash2 size={14} /></button>
+                  <div className="flex justify-center gap-1">
+                    <button className="p-1 hover:bg-amber-100 rounded text-amber-600" onClick={() => editEvaluationItem(e)} title="Sửa đánh giá"><Edit size={14} /></button>
+                    <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteEvaluationItem(e.evaluationId)} title="Xóa đánh giá"><Trash2 size={14} /></button>
+                  </div>
                 </td>
               </tr>
             ))}
-            {evaluations.length === 0 && <tr><td colSpan={10} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  const renderGrades = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-5 border-b flex justify-between items-center">
-        <h3 className="font-bold">📝 Bảng Điểm</h3>
-        <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className={selectClass}>
-          <option value="">Tất cả lớp</option>
-          {classes.map(c => <option key={c.classId} value={c.name}>{c.name}</option>)}
-        </select>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs sm:text-sm min-w-[600px]">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
-              <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Chuyên cần</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Kiểm tra</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Thi</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Trung bình</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Xếp loại</th>
-            </tr>
-          </thead>
-          <tbody>
-            {evaluations.map((e, i) => {
-              const avg = Math.round((e.attendScore || 0) * 0.3 + (e.testScore || 0) * 0.3 + (e.examScore || 0) * 0.4);
-              return (
-                <tr key={i} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-medium">{e.studentName}</td>
-                  <td className="p-3">{e.className}</td>
-                  <td className="p-3 text-center">{e.attendScore}</td>
-                  <td className="p-3 text-center">{e.testScore}</td>
-                  <td className="p-3 text-center">{e.examScore}</td>
-                  <td className="p-3 text-center font-bold">{avg}</td>
-                  <td className="p-3 text-center font-semibold" style={{ color: GRADE_COLORS[e.grade] || '#64748b' }}>{e.grade}</td>
-                </tr>
-              );
-            })}
-            {evaluations.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
+            {evaluations.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-400">Chưa có đánh giá nào trong tháng {format(evaluationMonth, 'MM/yyyy')}. Bấm "Thêm đánh giá" để tạo mới.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -1347,7 +1320,6 @@ export default function Home() {
       case 'schedule': return renderSchedule();
       case 'attendance': return renderAttendance();
       case 'evaluation': return renderEvaluations();
-      case 'grades': return renderGrades();
       case 'bills': return renderBills();
       case 'revenue': return renderRevenue();
       case 'users': return renderUsers();
@@ -1551,39 +1523,29 @@ export default function Home() {
     if (!evaluationModal.open) return null;
     const d = evaluationModal.data;
     const setD = (updates: Partial<EvaluationForm>) => setEvaluationModal({ ...evaluationModal, data: { ...d, ...updates } });
-    const total = Math.round(d.attendScore * 0.3 + d.testScore * 0.3 + d.examScore * 0.4);
-    const grade = total >= 90 ? 'Giỏi' : total >= 75 ? 'Khá' : total >= 60 ? 'Trung bình' : 'Yếu';
     return (
-      <Modal title="Thêm Đánh giá" onClose={() => setEvaluationModal({ open: false, data: { ...emptyEvaluation } })}>
+      <Modal title={evaluationModal.editing ? 'Sửa Đánh giá' : 'Thêm Đánh giá'} onClose={() => setEvaluationModal({ open: false, editing: false, data: { ...emptyEvaluation } })}>
         <FormField label="Học sinh *">
           <select className={selectClass} value={d.studentId} onChange={e => {
             const student = students.find(s => s.studentId === e.target.value);
             setD({ studentId: e.target.value, studentName: student?.name || '', className: student?.className || '' });
-          }}>
+          }} disabled={evaluationModal.editing}>
             <option value="">-- Chọn học sinh --</option>
             {students.map(s => <option key={s.studentId} value={s.studentId}>{s.name} ({s.className})</option>)}
           </select>
         </FormField>
         <FormField label="Lớp"><input className={inputClass} value={d.className} readOnly /></FormField>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FormField label="Ngày"><input type="date" className={inputClass} value={d.date} onChange={e => setD({ date: e.target.value })} /></FormField>
-          <FormField label="Xếp loại">
-            <select className={selectClass} value={grade} disabled>
-              {['Giỏi', 'Khá', 'Trung bình', 'Yếu'].map(g => <option key={g} value={g}>{g}</option>)}
-            </select>
-          </FormField>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <FormField label="Chuyên cần"><input type="number" min={0} max={100} className={inputClass} value={d.attendScore} onChange={e => setD({ attendScore: parseInt(e.target.value) || 0 })} /></FormField>
-          <FormField label="Kiểm tra"><input type="number" min={0} max={100} className={inputClass} value={d.testScore} onChange={e => setD({ testScore: parseInt(e.target.value) || 0 })} /></FormField>
-          <FormField label="Thi"><input type="number" min={0} max={100} className={inputClass} value={d.examScore} onChange={e => setD({ examScore: parseInt(e.target.value) || 0 })} /></FormField>
-        </div>
-        <div className="p-3 bg-gray-50 rounded-lg mb-3">
-          <div className="text-sm text-gray-500">Trung bình: <span className="font-bold text-lg" style={{ color: GRADE_COLORS[grade] }}>{total}</span></div>
-        </div>
-        <FormField label="Nhận xét"><textarea className={inputClass} value={d.note} onChange={e => setD({ note: e.target.value })} rows={2} placeholder="Nhận xét về học sinh..." /></FormField>
+        <FormField label="Tháng *">
+          <input type="month" className={inputClass} value={d.month ? `${d.month.split('/')[1]}-${d.month.split('/')[0]}` : ''} onChange={e => {
+            const [yyyy, mm] = e.target.value.split('-');
+            setD({ month: `${mm}/${yyyy}` });
+          }} />
+        </FormField>
+        <FormField label="Nhận xét">
+          <textarea className={inputClass} value={d.note} onChange={e => setD({ note: e.target.value })} rows={5} placeholder="Nhận xét về học sinh trong tháng (ý thức học tập, tiến bộ, kỹ năng...)" />
+        </FormField>
         <div className="flex justify-end gap-2 mt-4">
-          <button className={btnSecondary} onClick={() => setEvaluationModal({ open: false, data: { ...emptyEvaluation } })}>Huỷ</button>
+          <button className={btnSecondary} onClick={() => setEvaluationModal({ open: false, editing: false, data: { ...emptyEvaluation } })}>Huỷ</button>
           <button className={btnPrimary} onClick={saveEvaluationItem}>💾 Lưu</button>
         </div>
       </Modal>

@@ -107,22 +107,25 @@ export async function POST() {
     await db.attendance.createMany({ data: attData });
 
     const evalData = studentData.slice(0, 10).map((s, i) => {
-      const attendScore = 70 + Math.floor(Math.random() * 30);
-      const testScore = 60 + Math.floor(Math.random() * 40);
-      const examScore = 70 + Math.floor(Math.random() * 30);
-      const total = Math.round(attendScore * 0.3 + testScore * 0.3 + examScore * 0.4);
-      const grade = total >= 90 ? 'Giỏi' : total >= 75 ? 'Khá' : total >= 60 ? 'Trung bình' : 'Yếu';
+      const notes = [
+        'Học sinh tích cực, tiếp thu bài tốt. Cần luyện nói nhiều hơn.',
+        'Tiến bộ rõ rệt, tự tin trong giao tiếp. Giữ vững phong độ.',
+        'Cần chú ý hơn trong giờ học, hay nói riêng.',
+        'Làm bài đầy đủ, ý thức tốt. Củng cố ngữ pháp.',
+        'Học khá tốt, phát âm chuẩn. Tăng vốn từ vựng.',
+        'Nhiệt tình, hay phát biểu. Cần rèn kỹ năng viết.',
+        'Đúng giờ, chăm chỉ. Cần tự tin hơn khi nói.',
+        'Tiếp thu nhanh, bài tập tốt. Giỏi nghe nói.',
+        'Cần cố gắng thêm, hay nghỉ học. Liên hệ phụ huynh.',
+        'Học sinh xuất sắc, gương mẫu trong lớp.',
+      ];
       return {
         evaluationId: `E${String(i + 1).padStart(3, '0')}`,
         studentId: s.studentId,
         studentName: s.name,
         className: s.className,
-        date: '2026-04-30',
-        attendScore,
-        testScore,
-        examScore,
-        note: grade === 'Giỏi' ? 'Xuất sắc' : grade === 'Khá' ? 'Khá tốt' : 'Cần cải thiện',
-        grade,
+        month: '04/2026',
+        note: notes[i % notes.length],
       };
     });
     await db.evaluation.createMany({ data: evalData });

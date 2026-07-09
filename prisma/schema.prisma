@@ -79,12 +79,8 @@ model Evaluation {
   studentId    String   @map("student_id")
   studentName  String?  @map("student_name")
   className    String?  @map("class_name")
-  date         String?
-  attendScore  Int?     @map("attend_score")
-  testScore    Int?     @map("test_score")
-  examScore    Int?     @map("exam_score")
+  month        String?
   note         String?
-  grade        String?
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("evaluations")
