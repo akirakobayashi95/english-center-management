@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, School, Calendar, CheckSquare,
   Star, Receipt, UserCog, Settings, LogOut,
   Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight,
-  Menu, X, Printer, Download, DollarSign, TrendingUp
+  Menu, X, Printer, Download, DollarSign, TrendingUp, UserPlus
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO, isSameDay } from 'date-fns';
 
@@ -17,6 +17,7 @@ type AttendanceItem = { id: number; attendanceId: string; studentId: string; cla
 type EvaluationItem = { id: number; evaluationId: string; studentId: string; studentName: string; className: string; month: string; note: string };
 type BillItem = { id: number; billId: string; studentId: string; studentName: string; className: string; month: string; sessions: number; amount: number; paid: number; payDate: string | null; status: string };
 type UserItem = { id: number; userId: string; username: string; password: string; fullName: string; role: string; email: string; phone: string; status: string };
+type ProspectItem = { id: number; prospectId: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string };
 type DashboardData = {
   stats: { totalPresent: number; totalAbsent: number; totalExcused: number; totalLate: number; totalAttendance: number; presentRate: number };
   dailyStats: Record<string, { present: number; absent: number; excused: number; late: number }>;
@@ -38,6 +39,18 @@ const LEVEL_COLORS: Record<string, string> = {
   'Upper Intermediate': 'bg-orange-100 text-orange-700',
   'Advanced': 'bg-purple-100 text-purple-700',
   'Proficient': 'bg-indigo-100 text-indigo-700',
+};
+const TEST_STATUS_OPTIONS = ['Đã test', 'Chưa test', 'Hẹn test'];
+const PROSPECT_STATUSES = ['Đang chờ', 'Đã nhập học', 'Không nhập học'];
+const TEST_STATUS_COLORS: Record<string, string> = {
+  'Đã test': 'bg-green-100 text-green-700',
+  'Chưa test': 'bg-gray-100 text-gray-600',
+  'Hẹn test': 'bg-amber-100 text-amber-700',
+};
+const PROSPECT_STATUS_COLORS: Record<string, string> = {
+  'Đang chờ': 'bg-amber-100 text-amber-700',
+  'Đã nhập học': 'bg-green-100 text-green-700',
+  'Không nhập học': 'bg-red-100 text-red-700',
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
@@ -62,12 +75,13 @@ const btnSuccess = "px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white font-
 
 const pageTitles: Record<string, string> = {
   dashboard: 'Tổng quan', students: 'Học sinh', classes: 'Lớp học', schedule: 'Thời khoá biểu',
-  attendance: 'Điểm danh', evaluation: 'Đánh giá Học sinh', bills: 'Hoá đơn',
+  attendance: 'Điểm danh', evaluation: 'Đánh giá Học sinh', admission: 'Tuyển sinh', bills: 'Hoá đơn',
   revenue: 'Thống kê doanh thu', users: 'Người dùng', settings: 'Cài đặt',
 };
 
 const navItems = [
   { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard, section: 'Tổng quan' },
+  { id: 'admission', label: 'Tuyển sinh', icon: UserPlus, section: 'Quản lý' },
   { id: 'students', label: 'Học sinh', icon: Users, section: 'Quản lý' },
   { id: 'classes', label: 'Lớp học', icon: School, section: 'Quản lý' },
   { id: 'schedule', label: 'Thời khoá biểu', icon: Calendar, section: 'Quản lý' },
@@ -112,6 +126,9 @@ const emptyBill: BillForm = { studentId: '', studentName: '', className: '', mon
 type UserForm = { userId?: string; username: string; password: string; fullName: string; role: string; email: string; phone: string; status: string };
 const emptyUser: UserForm = { username: '', password: '', fullName: '', role: 'Giáo viên', email: '', phone: '', status: 'Active' };
 
+type ProspectForm = { prospectId?: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string };
+const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: '', studentName: '', gradeAge: '', desiredTime: '', testStatus: 'Chưa test', suggestedClass: '', note: '', status: 'Đang chờ' };
+
 export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [user, setUser] = useState<{ name: string; role: string } | null>(null);
@@ -135,6 +152,8 @@ export default function Home() {
   const [evaluations, setEvaluations] = useState<EvaluationItem[]>([]);
   const [bills, setBills] = useState<BillItem[]>([]);
   const [usersList, setUsersList] = useState<UserItem[]>([]);
+  const [prospects, setProspects] = useState<ProspectItem[]>([]);
+  const [prospectTab, setProspectTab] = useState('Đang chờ');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -148,6 +167,7 @@ export default function Home() {
   const [evaluationModal, setEvaluationModal] = useState({ open: false, editing: false, data: { ...emptyEvaluation } as EvaluationForm });
   const [billModal, setBillModal] = useState({ open: false, data: { ...emptyBill } as BillForm });
   const [userModal, setUserModal] = useState({ open: false, editing: false, data: { ...emptyUser } as UserForm });
+  const [prospectModal, setProspectModal] = useState({ open: false, editing: false, data: { ...emptyProspect } as ProspectForm });
   const [attCellModal, setAttCellModal] = useState({ open: false, date: '', studentId: '', status: '', note: '' });
 
   const showToast = useCallback((message: string, type = 'success') => {
@@ -220,6 +240,11 @@ export default function Home() {
       case 'users': {
         const uRes = await api('/users');
         if (uRes.success) setUsersList(uRes.data);
+        break;
+      }
+      case 'admission': {
+        const pRes = await api('/prospects');
+        if (pRes.success) setProspects(pRes.data);
         break;
       }
       case 'settings': {
@@ -431,6 +456,32 @@ export default function Home() {
     setLoading(false);
     if (res.success) showToast(res.message);
     else showToast(res.message, 'error');
+  };
+
+  const saveProspectItem = async () => {
+    const d = prospectModal.data;
+    if (!d.studentName) { showToast('Vui lòng nhập tên học sinh!', 'error'); return; }
+    if (!d.contactDate) { showToast('Vui lòng chọn ngày liên hệ!', 'error'); return; }
+    setLoading(true);
+    const res = await api('/prospects', { method: 'POST', body: JSON.stringify({ prospectId: d.prospectId || null, contactDate: d.contactDate, parentZalo: d.parentZalo, phone: d.phone, studentName: d.studentName, gradeAge: d.gradeAge, desiredTime: d.desiredTime, testStatus: d.testStatus, suggestedClass: d.suggestedClass, note: d.note, status: d.status }) });
+    setLoading(false);
+    if (res.success) { showToast(res.message); setProspectModal({ open: false, editing: false, data: { ...emptyProspect } }); loadData('admission'); }
+    else showToast(res.message, 'error');
+  };
+
+  const editProspectItem = (p: ProspectItem) => {
+    setProspectModal({ open: true, editing: true, data: { prospectId: p.prospectId, contactDate: p.contactDate, parentZalo: p.parentZalo, phone: p.phone, studentName: p.studentName, gradeAge: p.gradeAge, desiredTime: p.desiredTime, testStatus: p.testStatus, suggestedClass: p.suggestedClass, note: p.note, status: p.status } });
+  };
+
+  const deleteProspectItem = async (id: string) => {
+    if (!confirm('Xóa hồ sơ tuyển sinh này?')) return;
+    const res = await api('/prospects', { method: 'DELETE', body: JSON.stringify({ prospectId: id }) });
+    if (res.success) { showToast(res.message); loadData('admission'); }
+  };
+
+  const changeProspectStatus = async (p: ProspectItem, newStatus: string) => {
+    const res = await api('/prospects', { method: 'POST', body: JSON.stringify({ prospectId: p.prospectId, contactDate: p.contactDate, parentZalo: p.parentZalo, phone: p.phone, studentName: p.studentName, gradeAge: p.gradeAge, desiredTime: p.desiredTime, testStatus: p.testStatus, suggestedClass: p.suggestedClass, note: p.note, status: newStatus }) });
+    if (res.success) { showToast('Đã chuyển trạng thái!'); loadData('admission'); }
   };
 
   // Status Badge
@@ -1312,6 +1363,149 @@ export default function Home() {
     );
   };
 
+  const renderAdmission = () => {
+    const filtered = prospects.filter(p => p.status === prospectTab);
+    const counts = PROSPECT_STATUSES.reduce((acc, s) => {
+      acc[s] = prospects.filter(p => p.status === s).length;
+      return acc;
+    }, {} as Record<string, number>);
+    return (
+      <div className="space-y-4">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h3 className="font-bold text-sm sm:text-base flex items-center gap-2"><UserPlus size={18} /> Tuyển sinh - Học sinh chờ</h3>
+              <button className={`${btnPrimary} flex items-center gap-1 text-xs sm:text-sm`} onClick={() => setProspectModal({ open: true, editing: false, data: { ...emptyProspect, contactDate: new Date().toISOString().split('T')[0] } })}>
+                <Plus size={14} /> <span className="hidden sm:inline">Thêm HS chờ</span><span className="sm:hidden">Thêm</span>
+              </button>
+            </div>
+            {/* Status tabs */}
+            <div className="flex gap-1 flex-wrap">
+              {PROSPECT_STATUSES.map(st => (
+                <button
+                  key={st}
+                  onClick={() => setProspectTab(st)}
+                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${prospectTab === st ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  {st} <span className="opacity-75">({counts[st] || 0})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm min-w-[800px]">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-left p-3 font-semibold text-gray-500">Ngày liên hệ</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Tên Zalo PH</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">SĐT</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Tên HS</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Khối/Lớp/Tuổi</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Giờ mong muốn</th>
+                  <th className="text-center p-3 font-semibold text-gray-500">Test đầu vào</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Lớp ghép khả thi</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Ghi chú</th>
+                  <th className="text-center p-3 font-semibold text-gray-500">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p, i) => (
+                  <tr key={i} className="border-t hover:bg-gray-50">
+                    <td className="p-3 whitespace-nowrap">{formatDate(p.contactDate)}</td>
+                    <td className="p-3 font-medium">{p.parentZalo}</td>
+                    <td className="p-3 whitespace-nowrap">{p.phone || '-'}</td>
+                    <td className="p-3 font-medium">{p.studentName}</td>
+                    <td className="p-3">{p.gradeAge || '-'}</td>
+                    <td className="p-3 text-xs">{p.desiredTime || '-'}</td>
+                    <td className="p-3 text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${TEST_STATUS_COLORS[p.testStatus] || 'bg-gray-100 text-gray-600'}`}>{p.testStatus || '-'}</span>
+                    </td>
+                    <td className="p-3 text-xs">{p.suggestedClass || '-'}</td>
+                    <td className="p-3 text-xs max-w-[180px] truncate" title={p.note}>{p.note || '-'}</td>
+                    <td className="p-3 text-center">
+                      <div className="flex justify-center gap-1 flex-wrap">
+                        <button className="p-1 hover:bg-amber-100 rounded text-amber-600" onClick={() => editProspectItem(p)} title="Sửa"><Edit size={14} /></button>
+                        {p.status === 'Đang chờ' && (
+                          <button className="p-1 hover:bg-green-100 rounded text-green-600 text-xs font-semibold" onClick={() => changeProspectStatus(p, 'Đã nhập học')} title="Chuyển sang đã nhập học">✓</button>
+                        )}
+                        {p.status === 'Đang chờ' && (
+                          <button className="p-1 hover:bg-red-100 rounded text-red-600 text-xs font-semibold" onClick={() => changeProspectStatus(p, 'Không nhập học')} title="Chuyển sang không nhập học">✗</button>
+                        )}
+                        <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteProspectItem(p.prospectId)} title="Xóa"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && <tr><td colSpan={10} className="p-8 text-center text-gray-400">Chưa có hồ sơ nào. Bấm "Thêm HS chờ" để tạo mới.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderProspectModal = () => {
+    if (!prospectModal.open) return null;
+    const d = prospectModal.data;
+    const setD = (updates: Partial<ProspectForm>) => setProspectModal({ ...prospectModal, data: { ...d, ...updates } });
+    return (
+      <Modal title={prospectModal.editing ? 'Sửa hồ sơ tuyển sinh' : 'Thêm HS chờ'} onClose={() => setProspectModal({ open: false, editing: false, data: { ...emptyProspect } })}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField label="Ngày liên hệ (lần đầu) *">
+            <input type="date" className={inputClass} value={d.contactDate} onChange={e => setD({ contactDate: e.target.value })} />
+          </FormField>
+          <FormField label="Tên Zalo PH">
+            <input className={inputClass} value={d.parentZalo} onChange={e => setD({ parentZalo: e.target.value })} placeholder="Tên Zalo phụ huynh" />
+          </FormField>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField label="SĐT (nếu có)">
+            <input className={inputClass} value={d.phone} onChange={e => setD({ phone: e.target.value })} placeholder="Số điện thoại" />
+          </FormField>
+          <FormField label="Tên học sinh *">
+            <input className={inputClass} value={d.studentName} onChange={e => setD({ studentName: e.target.value })} placeholder="Tên học sinh" />
+          </FormField>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField label="Khối/Lớp/Tuổi">
+            <input className={inputClass} value={d.gradeAge} onChange={e => setD({ gradeAge: e.target.value })} placeholder="VD: Lớp 6 / 11 tuổi" />
+          </FormField>
+          <FormField label="Giờ học mong muốn">
+            <input className={inputClass} value={d.desiredTime} onChange={e => setD({ desiredTime: e.target.value })} placeholder="VD: T2-T4-T6 18:00-19:30" />
+          </FormField>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField label="Test đầu vào">
+            <select className={selectClass} value={d.testStatus} onChange={e => setD({ testStatus: e.target.value })}>
+              {TEST_STATUS_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </FormField>
+          <FormField label="Lớp ghép khả thi">
+            <select className={selectClass} value={d.suggestedClass} onChange={e => setD({ suggestedClass: e.target.value })}>
+              <option value="">-- Chưa xác định --</option>
+              {classes.map(c => <option key={c.classId} value={c.name}>{c.name}</option>)}
+            </select>
+          </FormField>
+        </div>
+        {prospectModal.editing && (
+          <FormField label="Trạng thái">
+            <select className={selectClass} value={d.status} onChange={e => setD({ status: e.target.value })}>
+              {PROSPECT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </FormField>
+        )}
+        <FormField label="Ghi chú">
+          <textarea className={inputClass} value={d.note} onChange={e => setD({ note: e.target.value })} rows={3} placeholder="Ghi chú thêm (nguồn, nhu cầu, đặc điểm...)" />
+        </FormField>
+        <div className="flex justify-end gap-2 mt-4">
+          <button className={btnSecondary} onClick={() => setProspectModal({ open: false, editing: false, data: { ...emptyProspect } })}>Huỷ</button>
+          <button className={btnPrimary} onClick={saveProspectItem}>💾 Lưu</button>
+        </div>
+      </Modal>
+    );
+  };
+
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard': return renderDashboard();
@@ -1322,6 +1516,7 @@ export default function Home() {
       case 'evaluation': return renderEvaluations();
       case 'bills': return renderBills();
       case 'revenue': return renderRevenue();
+      case 'admission': return renderAdmission();
       case 'users': return renderUsers();
       case 'settings': return renderSettings();
       default: return renderDashboard();
@@ -1710,6 +1905,7 @@ export default function Home() {
       {renderEvaluationModal()}
       {renderBillModal()}
       {renderUserModal()}
+      {renderProspectModal()}
 
       {/* Loading Overlay */}
       {loading && (

@@ -86,6 +86,24 @@ model Evaluation {
   @@map("evaluations")
 }
 
+model Prospect {
+  id             Int      @id @default(autoincrement())
+  prospectId     String   @unique @map("prospect_id")
+  contactDate    String?  @map("contact_date")
+  parentZalo     String?  @map("parent_zalo")
+  phone          String?
+  studentName    String?  @map("student_name")
+  gradeAge       String?  @map("grade_age")
+  desiredTime    String?  @map("desired_time")
+  testStatus     String?  @map("test_status")
+  suggestedClass String?  @map("suggested_class")
+  note           String?
+  status         String   @default("Đang chờ")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("prospects")
+}
+
 model Bill {
   id          Int      @id @default(autoincrement())
   billId      String   @unique @map("bill_id")
