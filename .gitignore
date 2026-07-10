@@ -1,6 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# Dependencies
 node_modules
 /.pnp
 .pnp.*
@@ -10,45 +8,67 @@ node_modules
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# Testing
 /coverage
 
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
+# Production
 /build
 
-# misc
+# Misc
 .DS_Store
 *.pem
 
-# debug
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
+dev.log
+server.log
+dev.out.log
 
-# env files (can opt-in for committing if needed)
-.env*
+# Env local (sử dụng .env.example làm mẫu)
+.env
+!.env.example
 
-# vercel
+# Vercel
 .vercel
 
-
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 local-*
 .claude
 .z-ai-config
-*.log
-dev.log
-dev.out.log
+
+# Production data (SQLite persistent volume — KHÔNG commit lên Git)
+/data/
+/db/*.db
+/db/*.db-journal
+/db/*.db-wal
+
+# Z.ai workspace-only scripts (không cần cho Oracle Cloud deploy)
+.zscripts/
+.z-ai-config
+
+# Screenshots / artifacts chỉ dùng cho Z.ai preview
+*.png
+*.jpg
+*.jpeg
+*.gif
+upload/
+tool-results/
+download/
+
+# Examples / mini-services (không dùng cho production)
+examples/
+mini-services/
+
+# Test files
 test
 prompt
-
-server.log
-# Skills directory
-/skills/

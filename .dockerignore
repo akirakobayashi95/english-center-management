@@ -1,0 +1,62 @@
+# Docker ignore — loại bỏ file không cần khỏi build context (giảm thời gian build)
+
+# Dependencies (sẽ cài lại trong Docker)
+node_modules
+.pnp
+.pnp.*
+
+# Next.js build output (sẽ build lại trong Docker)
+.next/
+out/
+build/
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Environment local (dùng env từ docker-compose)
+.env*
+!.env.example
+
+# Logs
+*.log
+dev.log
+server.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database local (sẽ copy/mount riêng)
+db/
+data/
+
+# IDE / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+coverage
+test
+
+# Screenshots / uploads không cần cho runtime
+*.png
+*.jpg
+*.jpeg
+*.gif
+upload/
+tool-results/
+download/
+
+# Workspace-specific scripts (chỉ dùng trên Z.ai cloud)
+.zscripts/
+.z-ai-config
+examples/
+mini-services/
+Caddyfile
+
+# Docs
+DEPLOY.md
+README.md

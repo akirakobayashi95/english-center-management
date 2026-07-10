@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 
 // Seed initial data for the English Center Management system
@@ -9,11 +10,18 @@ export async function POST() {
       return NextResponse.json({ success: true, message: 'Already seeded' });
     }
 
+    // Băm mật khẩu trước khi lưu vào DB
+    const [adminPass, teacher1Pass, teacher2Pass] = await Promise.all([
+      bcrypt.hash('admin123', 10),
+      bcrypt.hash('teacher123', 10),
+      bcrypt.hash('teacher123', 10),
+    ]);
+
     await db.user.createMany({
       data: [
-        { userId: 'U001', username: 'admin', password: 'admin123', fullName: 'Nguyễn Quản Trị', role: 'Admin', email: 'admin@msmyen.edu.vn', phone: '0900000001', status: 'Active' },
-        { userId: 'U002', username: 'teacher1', password: 'teacher123', fullName: 'Cô Lê', role: 'Giáo viên', email: 'le@msmyen.edu.vn', phone: '0900000002', status: 'Active' },
-        { userId: 'U003', username: 'teacher2', password: 'teacher123', fullName: 'Thầy Minh', role: 'Giáo viên', email: 'minh@msmyen.edu.vn', phone: '0900000003', status: 'Active' },
+        { userId: 'U001', username: 'admin', password: adminPass, fullName: 'Nguyễn Quản Trị', role: 'Admin', email: 'admin@msmyen.edu.vn', phone: '0900000001', status: 'Active' },
+        { userId: 'U002', username: 'teacher1', password: teacher1Pass, fullName: 'Cô Lê', role: 'Giáo viên', email: 'le@msmyen.edu.vn', phone: '0900000002', status: 'Active' },
+        { userId: 'U003', username: 'teacher2', password: teacher2Pass, fullName: 'Thầy Minh', role: 'Giáo viên', email: 'minh@msmyen.edu.vn', phone: '0900000003', status: 'Active' },
       ],
     });
 

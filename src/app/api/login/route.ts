@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
@@ -9,7 +10,13 @@ export async function POST(req: NextRequest) {
       where: { username },
     });
 
-    if (!user || user.password !== password) {
+    if (!user) {
+      return NextResponse.json({ success: false, message: 'Sai tên đăng nhập hoặc mật khẩu!' }, { status: 401 });
+    }
+
+    // So sánh mật khẩu nhập vào với hash đã lưu (hỗ trợ backward-compat với mật khẩu plain-text cũ)
+    const isMatch = await bcrypt.compare(password, user.password).catch(() => password === user.password);
+    if (!isMatch) {
       return NextResponse.json({ success: false, message: 'Sai tên đăng nhập hoặc mật khẩu!' }, { status: 401 });
     }
 

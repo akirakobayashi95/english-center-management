@@ -1,0 +1,32 @@
+# =============================================================================
+# docker-compose.yml — MsMyenEnglish
+# Cách dùng:
+#   Build & chạy:  docker compose up -d --build
+#   Xem log:       docker compose logs -f
+#   Dừng:          docker compose down
+#   Rebuild:       docker compose up -d --build
+# =============================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: msmyen-app
+    ports:
+      - "3000:3000"
+    volumes:
+      # Database SQLite persistent — KHÔNG bị mất khi rebuild container
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/custom.db
+      # Đặt "true" CHỈ khi muốn tự seed dữ liệu mẫu (lần đầu). Sau đó đặt lại "false".
+      - NEXT_PUBLIC_AUTO_SEED=false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

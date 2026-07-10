@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 
 export async function GET() {
@@ -17,21 +18,35 @@ export async function POST(req: NextRequest) {
     const { userId, username, password, fullName, role, email, phone, status } = body;
 
     if (userId) {
-      await db.user.update({
-        where: { userId },
-        data: { username, password, fullName, role, email, phone, status },
-      });
+      // Khi cập nhật: nếu password khác rỗng thì băm lại; nếu rỗng thì giữ nguyên
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await db.user.update({
+          where: { userId },
+          data: { username, password: hashedPassword, fullName, role, email, phone, status },
+        });
+      } else {
+        await db.user.update({
+          where: { userId },
+          data: { username, fullName, role, email, phone, status },
+        });
+      }
       return NextResponse.json({ success: true, message: 'Cập nhật thành công!' });
+    }
+
+    if (!password) {
+      return NextResponse.json({ success: false, message: 'Mật khẩu không được để trống!' }, { status: 400 });
     }
 
     const count = await db.user.count();
     const newId = `U${String(count + 1).padStart(3, '0')}`;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     await db.user.create({
       data: {
         userId: newId,
         username,
-        password,
+        password: hashedPassword,
         fullName,
         role: role || 'Giáo viên',
         email: email || '',

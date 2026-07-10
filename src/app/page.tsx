@@ -175,9 +175,11 @@ export default function Home() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Seed on mount
+  // Seed on mount — chỉ chạy khi bật NEXT_PUBLIC_AUTO_SEED (mặc định tắt ở production)
   useEffect(() => {
-    fetch('/api/seed', { method: 'POST' }).catch(() => {});
+    if (process.env.NEXT_PUBLIC_AUTO_SEED === 'true') {
+      fetch('/api/seed', { method: 'POST' }).catch(() => {});
+    }
   }, []);
 
   const loadClasses = useCallback(async () => {
