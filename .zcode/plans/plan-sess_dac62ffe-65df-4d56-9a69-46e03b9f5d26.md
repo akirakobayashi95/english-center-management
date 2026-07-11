@@ -1,92 +1,90 @@
-# Kế hoạch: Tối ưu hóa Project MsMyenEnglish cho Oracle Cloud Deploy
+# Kế hoạch: Tinh chỉnh project deploy lên Vercel (Neon PostgreSQL)
 
-## Tổng quan phân tích hiện trạng
+## Tổng quan vấn đề cốt lõi
+Vercel là **serverless platform** — mỗi API route là một function độc lập, filesystem **không persistent**. Do đó:
+- ❌ SQLite (file-based) **không hoạt động** — mỗi request file DB sẽ reset/bị thiếu
+- ✅ Cần migrate sang **PostgreSQL** (Neon — serverless Postgres tối ưu cho Vercel)
 
-**Vấn đề cần khắc phục trước khi deploy:**
-1. 🔴 **Auto-seed khi load trang** — `page.tsx:179-181` gọi `POST /api/seed` mỗi lần mount → phải bỏ/guard bằng biến môi trường
-2. 🔴 **Mật khẩu plain-text** trong seed & login (`admin123`, `teacher123`) → cần băm bằng bcryptjs
-3. 🔴 **DATABASE_URL hardcode** trong `.env` trỏ tới `/home/z/my-project/...` (path của Z.ai cloud) → cần dùng biến môi trường + relative path
-4. 🟡 **Prisma log query** (`src/lib/db.ts:10`) → spam log production, cần tắt
-5. 🟡 **Không có file deploy** nào (Dockerfile, docker-compose, .dockerignore)
-6. 🟡 **`next.config.ts`** chưa set header bảo mật, cache, compression
-
-## Plan triển khai (3 phần)
+## Lựa chọn đã chốt
+- **DB Provider:** Neon (free tier 0.5GB, branch-able, tối ưu serverless)
+- **Giữ Docker/Oracle Cloud** files song song (deploy 2 nơi được)
+- **Có migration script** chuyển data SQLite → PostgreSQL
 
 ---
 
-### PHẦN A: Tối ưu code cho production
+## Các bước triển khai
 
-**1. `src/app/page.tsx`** — Bỏ auto-seed, guard bằng env
-```tsx
-useEffect(() => {
-  if (process.env.NEXT_PUBLIC_AUTO_SEED === 'true') {
-    fetch('/api/seed', { method: 'POST' }).catch(() => {});
-  }
-}, []);
+### 1. Cập nhật `prisma/schema.prisma` — Đổi provider sang PostgreSQL
+```prisma
+datasource db {
+  provider = "postgresql"   // đổi từ "sqlite"
+  url      = env("DATABASE_URL")
+}
+```
+**Lý do:** Prisma generate code khác nhau cho sqlite vs postgresql. Không thể dùng cùng 1 client.
+
+### 2. Tạo Prisma migration chính thức
+- Chạy `prisma migrate dev --name init` để tạo `prisma/migrations/` folder
+- **Lý do cần:** Trên serverless, `prisma db push` không tin cậy vì cold start. Migration chính thức đảm bảo schema được apply khi deploy.
+- Tạo file `prisma/migrations/0_init/migration.sql` (nếu cần manual)
+
+### 3. Sửa seed data cho tương thích PostgreSQL
+- Đọc lại `src/app/api/seed/route.ts` — schema hiện tại nên tương thích (dùng String, Int, DateTime)
+- Có thể có vấn đề với `DateTime` — SQLite linh hoạt hơn PostgreSQL về format ngày tháng
+- Kiểm tra: `birthDate String?`, `createdAt DateTime @default(now())` → OK
+- Cần đảm bảo các field `date` trong Attendance/Schedule dùng định dạng ISO nhất quán
+
+### 4. Cập nhật `.env` cho cả 2 môi trường
+```
+# Local dev (Neon connection string)
+DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
+
+# Production (Vercel) — set trong Vercel dashboard
+DATABASE_URL="postgresql://..."
 ```
 
-**2. `.env` + `.env.example`** — Tách biến môi trường
-- `.env`: `DATABASE_URL="file:./db/custom.db"` (relative path, chạy được mọi nơi)
-- `.env.example`: mẫu cho user
-- `src/lib/db.ts`: bỏ `log: ['query']`
+### 5. Tạo migration script SQLite → PostgreSQL
+File mới: `scripts/migrate-sqlite-to-postgres.ts`
+- Đọc toàn bộ data từ `db/custom.db` (SQLite)
+- Insert vào PostgreSQL qua Prisma
+- Kèm duplicate check (dùng upsert)
+- Bao gồm: students, classes, schedules, attendance, evaluations, bills, users, prospects, settings
 
-**3. Bảo mật mật khẩu (bcrypt)** — Tối thiểu như đã chọn
-- Thêm `bcryptjs` vào dependencies
-- `src/app/api/seed/route.ts`: băm password khi seed (`await bcrypt.hash(...)`)
-- `src/app/api/login/route.ts`: so sánh bằng `bcrypt.compare`
-- `src/app/api/users/route.ts`: băm password khi tạo/cập nhật user
-- **Migration**: tạo script `scripts/hash-existing-passwords.ts` băm lại toàn bộ password hiện có trong DB
-
-**4. `next.config.ts`** — Thêm cấu hình production
-- `compress: true`, security headers (X-Frame-Options, X-Content-Type-Options, v.v.)
-- Giữ `output: 'standalone'`, `reactStrictMode` bật lại
-
----
-
-### PHẦN B: Docker hóa (Docker Compose)
-
-**5. `Dockerfile`** — Multi-stage build tối ưu cho ARM64 (Oracle Ampere)
-- **Stage 1 (base)**: `oven/bun:latest` làm base, cài `openssl` + `prisma` engines
-- **Stage 2 (deps)**: Copy `package.json` + `bun.lock`, `bun install --frozen-lockfile`
-- **Stage 3 (builder)**: Copy source, chạy `prisma generate` + `next build` (output standalone)
-- **Stage 4 (runner)**: Image tối thiểu, chỉ copy `.next/standalone`, `.next/static`, `public`, `prisma/schema.prisma`, `db/`, `node_modules/.prisma`. Expose port 3000.
-
-**6. `docker-compose.yml`** — Dễ deploy
-```yaml
-services:
-  app:
-    build: .
-    container_name: msmyen-app
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./data:/app/data    # SQLite DB persistent
-    environment:
-      - DATABASE_URL=file:/app/data/custom.db
-      - NODE_ENV=production
-    restart: unless-stopped
+### 6. Tạo `vercel.json` — cấu hình Vercel
+```json
+{
+  "buildCommand": "prisma generate && next build",
+  "installCommand": "npm install"
+}
 ```
 
-**7. `.dockerignore`** — Loại bỏ `node_modules`, `.next`, `*.png`, `upload/`, `tool-results/`, `.git`, v.v.
+### 7. Tạo file `.env.vercel.example` — hướng dẫn setup Vercel
+Liệt kê các biến env cần set trong Vercel Dashboard:
+- `DATABASE_URL` (Neon connection string)
+- `NEXT_PUBLIC_AUTO_SEED` = "false"
 
-**8. `prisma/schema.prisma`** — Cập nhật datasource để nhận env `DATABASE_URL` linh hoạt (đã có rồi, chỉ cần đảm bảo `.env` đúng)
+### 8. Sửa `package.json` — thêm scripts Vercel/Prisma
+```json
+"build": "prisma generate && next build",
+"postinstall": "prisma generate"
+```
+**Lý do cần `postinstall`:** Vercel chạy `npm install` khi build → cần `prisma generate` chạy sau đó để có client.
 
----
+### 9. Tạo `DEPLOY-VERCEL.md` — hướng dẫn tiếng Việt
+Bước-by-bước:
+1. Tạo tài khoản Neon → tạo project → copy connection string
+2. Tạo tài khoản Vercel → import GitHub repo
+3. Set environment variables trong Vercel
+4. Deploy → chạy migration/seed
+5. Chạy migration script (nếu cần import data cũ)
 
-### PHẦN C: Hướng dẫn deploy Oracle Cloud (Tiếng Việt)
+### 10. Cập nhật `next.config.ts` & `src/lib/db.ts`
+- Giữ nguyên (đã OK cho serverless)
+- **Lý do:** Prisma client đã được thiết kế để work với serverless. Không cần connection pooling thủ công vì Neon tự xử lý.
 
-**9. `DEPLOY.md`** — Hướng dẫn chi tiết từng bước:
-1. **Tạo Oracle Cloud account** + Always Free VM (VM.Standard.A1.Flex ARM, 4 OCPU/24GB)
-2. **Cấu hình Ingress Rules** (mở port 80/443/3000 trong VCN Security List)
-3. **SSH vào VM**, cài Docker + Docker Compose
-4. **Transfer code** lên VM (git clone hoặc scp)
-5. **Build & Run**: `docker compose up -d --build`
-6. **Cài Caddy reverse proxy** (HTTPS tự động với Let's Encrypt) hoặc Nginx
-7. **Cấu hình domain** (optional, trỏ A record về IP VM)
-8. **Backup DB**: cron job `sqlite3 .backup`
-9. **Troubleshooting** các lỗi thường gặp
-
-**10. Cập nhật `.gitignore`** — Thêm `data/`, `dev.log`, `server.log`
+### 11. Tạo Prisma Data Seeder script độc lập
+File: `scripts/seed-prod.ts` — chạy seed ngoài app
+**Lý do:** Trên Vercel không có filesystem, không chạy `fetch('/api/seed')` được. Cần script chạy qua CLI: `npx tsx scripts/seed-prod.ts`
 
 ---
 
@@ -94,24 +92,26 @@ services:
 
 | File | Hành động |
 |---|---|
-| `src/app/page.tsx` | Sửa (bỏ auto-seed) |
-| `src/lib/db.ts` | Sửa (bỏ query log) |
-| `.env` | Sửa (relative path) |
-| `src/app/api/seed/route.ts` | Sửa (bcrypt) |
-| `src/app/api/login/route.ts` | Sửa (bcrypt) |
-| `src/app/api/users/route.ts` | Sửa (bcrypt) |
-| `package.json` | Sửa (thêm bcryptjs + script hash) |
-| `next.config.ts` | Sửa (security headers) |
-| `.env.example` | **Tạo mới** |
-| `.dockerignore` | **Tạo mới** |
-| `Dockerfile` | **Tạo mới** |
-| `docker-compose.yml` | **Tạo mới** |
-| `scripts/hash-existing-passwords.ts` | **Tạo mới** |
-| `DEPLOY.md` | **Tạo mới** (hướng dẫn tiếng Việt) |
-| `.gitignore` | Sửa (thêm data/) |
+| `prisma/schema.prisma` | Sửa: `provider = "postgresql"` |
+| `prisma/migrations/` | Tạo: migration SQL init |
+| `src/app/api/seed/route.ts` | Sửa: đảm bảo tương thích Postgres |
+| `.env` | Sửa: thêm Neon connection string (placeholder) |
+| `.env.vercel.example` | **Tạo mới** |
+| `vercel.json` | **Tạo mới** |
+| `package.json` | Sửa: thêm postinstall + build script |
+| `scripts/migrate-sqlite-to-postgres.ts` | **Tạo mới** |
+| `scripts/seed-prod.ts` | **Tạo mới** |
+| `DEPLOY-VERCEL.md` | **Tạo mới** (hướng dẫn tiếng Việt) |
+
+## Giữ nguyên (không sửa)
+- `Dockerfile`, `docker-compose.yml`, `DEPLOY.md` — vẫn dùng cho Oracle Cloud (PostgreSQL cũng chạy được)
+- `src/app/page.tsx`, `src/app/api/*/route.ts` — logic API không đổi (Prisma API nhất quán giữa SQLite/Postgres)
 
 ## Lưu ý quan trọng
-- **Không thêm auth middleware** (giữ nguyên luồng đăng nhập hiện tại theo lựa chọn "Tối thiểu")
-- **Vẫn dùng SQLite** (phù hợp quy mô trung tâm tiếng Anh nhỏ-vừa, đơn giản, không cần DB server riêng)
-- **Bun runtime** trong Docker (nhẹ hơn Node, build nhanh)
-- Tương thích **ARM64** (Oracle Always Free Ampere)
+- **Prisma client phải được regenerate** khi đổi provider (sqlite → postgresql)
+- **`postinstall` script rất quan trọng** — không có nó Vercel build sẽ fail vì thiếu Prisma client
+- **Neon connection string cần `?sslmode=require`** — Vercel yêu cầu SSL
+- **Có thể phải chạy migration script thủ công** lần đầu (không có DB để migrate tự động)
+- **Vercel Hobby tier**: 100GB-hours serverless function execution/tháng — đủ dư cho project này
+- **Kích hoạt Neon "Auto-suspend"**: free tier pause DB sau inactivity, warm-up mất ~1s
+- **Lỗi Neon cold start**: nếu app "chậm" lần đầu truy cập → đó là Neon wake up, không phải lỗi code
