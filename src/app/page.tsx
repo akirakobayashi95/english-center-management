@@ -1490,10 +1490,10 @@ export default function Home() {
 
   const renderProspectModal = () => {
     if (!prospectModal.open) return null;
+    const setD = (updates: Partial<ProspectForm>) => setProspectModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     const d = prospectModal.data;
-    const setD = (updates: Partial<ProspectForm>) => setProspectModal({ ...prospectModal, data: { ...d, ...updates } });
     return (
-      <Modal title={prospectModal.editing ? 'Sửa hồ sơ tuyển sinh' : 'Thêm HS chờ'} onClose={() => setProspectModal({ open: false, editing: false, data: { ...emptyProspect } })}>
+      <Modal title={prospectModal.editing ? 'Sửa hồ sơ tuyển sinh' : 'Thêm HS chờ'} onClose={() => setProspectModal(prev => ({ ...prev, open: false, editing: false, data: { ...emptyProspect } }))}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Ngày liên hệ (lần đầu) *">
             <input type="date" className={inputClass} value={d.contactDate} onChange={e => setD({ contactDate: e.target.value })} />
@@ -1597,9 +1597,9 @@ export default function Home() {
   const renderStudentModal = () => {
     if (!studentModal.open) return null;
     const d = studentModal.data;
-    const setD = (updates: Partial<StudentForm>) => setStudentModal({ ...studentModal, data: { ...d, ...updates } });
+    const setD = (updates: Partial<StudentForm>) => setStudentModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     return (
-      <Modal title={studentModal.editing ? 'Sửa Học sinh' : 'Thêm Học sinh'} onClose={() => setStudentModal({ ...studentModal, open: false })}>
+      <Modal title={studentModal.editing ? 'Sửa Học sinh' : 'Thêm Học sinh'} onClose={() => setStudentModal(prev => ({ ...prev, open: false }))}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Họ tên *"><input className={inputClass} value={d.name} onChange={e => setD({ name: e.target.value })} placeholder="Nhập họ tên" /></FormField>
           <FormField label="Ngày sinh"><input type="date" className={inputClass} value={d.birthDate} onChange={e => setD({ birthDate: e.target.value })} /></FormField>
@@ -1627,7 +1627,7 @@ export default function Home() {
         </div>
         <FormField label="Ghi chú"><textarea className={inputClass} value={d.note} onChange={e => setD({ note: e.target.value })} rows={2} placeholder="Ghi chú..." /></FormField>
         <div className="flex justify-end gap-2 mt-4">
-          <button className={btnSecondary} onClick={() => setStudentModal({ ...studentModal, open: false })}>Huỷ</button>
+          <button className={btnSecondary} onClick={() => setStudentModal(prev => ({ ...prev, open: false }))}>Huỷ</button>
           <button className={btnPrimary} onClick={saveStudent}>💾 Lưu</button>
         </div>
       </Modal>
@@ -1637,9 +1637,9 @@ export default function Home() {
   const renderClassModal = () => {
     if (!classModal.open) return null;
     const d = classModal.data;
-    const setD = (updates: Partial<ClassForm>) => setClassModal({ ...classModal, data: { ...d, ...updates } });
+    const setD = (updates: Partial<ClassForm>) => setClassModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     return (
-      <Modal title={classModal.editing ? 'Sửa Lớp' : 'Thêm Lớp'} onClose={() => setClassModal({ ...classModal, open: false })}>
+      <Modal title={classModal.editing ? 'Sửa Lớp' : 'Thêm Lớp'} onClose={() => setClassModal(prev => ({ ...prev, open: false }))}>
         <FormField label="Tên lớp *"><input className={inputClass} value={d.name} onChange={e => setD({ name: e.target.value })} placeholder="VD: English A1" /></FormField>
         <FormField label="Trình độ">
           <select className={selectClass} value={d.level} onChange={e => setD({ level: e.target.value })}>
@@ -1662,10 +1662,10 @@ export default function Home() {
 
   const renderScheduleModal = () => {
     if (!scheduleModal.open) return null;
+    const setD = (updates: Partial<ScheduleForm>) => setScheduleModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     const d = scheduleModal.data;
-    const setD = (updates: Partial<ScheduleForm>) => setScheduleModal({ ...scheduleModal, data: { ...d, ...updates } });
     return (
-      <Modal title="Thêm Lịch học" onClose={() => setScheduleModal({ open: false, data: { ...emptySchedule } })}>
+      <Modal title="Thêm Lịch học" onClose={() => setScheduleModal(prev => ({ ...prev, open: false, data: { ...emptySchedule } }))}>
         <FormField label="Lớp *">
           <select className={selectClass} value={d.className} onChange={e => setD({ className: e.target.value })}>
             <option value="">-- Chọn lớp --</option>
@@ -1768,9 +1768,9 @@ export default function Home() {
   const renderEvaluationModal = () => {
     if (!evaluationModal.open) return null;
     const d = evaluationModal.data;
-    const setD = (updates: Partial<EvaluationForm>) => setEvaluationModal({ ...evaluationModal, data: { ...d, ...updates } });
+    const setD = (updates: Partial<EvaluationForm>) => setEvaluationModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     return (
-      <Modal title={evaluationModal.editing ? 'Sửa Đánh giá' : 'Thêm Đánh giá'} onClose={() => setEvaluationModal({ open: false, editing: false, data: { ...emptyEvaluation } })}>
+      <Modal title={evaluationModal.editing ? 'Sửa Đánh giá' : 'Thêm Đánh giá'} onClose={() => setEvaluationModal(prev => ({ ...prev, open: false, editing: false, data: { ...emptyEvaluation } }))}>
         <FormField label="Học sinh *">
           <select className={selectClass} value={d.studentId} onChange={e => {
             const student = students.find(s => s.studentId === e.target.value);
