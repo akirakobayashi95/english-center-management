@@ -7,7 +7,7 @@ import {
   Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight,
   Menu, X, Printer, Download, DollarSign, TrendingUp, UserPlus
 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO, isSameDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, parseISO } from 'date-fns';
 
 // Types
 type Student = { id: number; studentId: string; name: string; birthDate: string | null; gender: string; phone: string; parentZalo: string; address: string; className: string; registerDate: string; note: string; status: string };
@@ -128,6 +128,27 @@ const emptyUser: UserForm = { username: '', password: '', fullName: '', role: 'G
 
 type ProspectForm = { prospectId?: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gender: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string };
 const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: '', studentName: '', gender: 'Nam', gradeAge: '', desiredTime: '', testStatus: 'Chưa test', suggestedClass: '', note: '', status: 'Đang chờ' };
+
+// Modal components — define ở module scope (KHÔNG bên trong Home) để giữ identity ổn định.
+// Nếu để trong Home(), mỗi keystroke tạo ra reference mới → React remount input → mất focus.
+const Modal = ({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) => (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="bg-white rounded-2xl w-full max-w-lg mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div className="flex justify-between items-center p-5 border-b">
+        <h3 className="text-lg font-bold">{title}</h3>
+        <button onClick={onClose} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"><X size={16} /></button>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  </div>
+);
+
+const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div className="mb-4">
+    <label className="block text-sm font-semibold mb-1 text-gray-700">{label}</label>
+    {children}
+  </div>
+);
 
 export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -1574,25 +1595,8 @@ export default function Home() {
     }
   };
 
-  // Modal components
-  const Modal = ({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) => (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-5 border-b">
-          <h3 className="text-lg font-bold">{title}</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"><X size={16} /></button>
-        </div>
-        <div className="p-5">{children}</div>
-      </div>
-    </div>
-  );
-
-  const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div className="mb-4">
-      <label className="block text-sm font-semibold mb-1 text-gray-700">{label}</label>
-      {children}
-    </div>
-  );
+  // Modal & FormField đã chuyển ra module scope (trước component Home)
+  // để tránh bug mất focus khi gõ nhanh trong input
 
   const renderStudentModal = () => {
     if (!studentModal.open) return null;
@@ -1801,9 +1805,9 @@ export default function Home() {
   const renderBillModal = () => {
     if (!billModal.open) return null;
     const d = billModal.data;
-    const setD = (updates: Partial<BillForm>) => setBillModal({ ...billModal, data: { ...d, ...updates } });
+    const setD = (updates: Partial<BillForm>) => setBillModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     return (
-      <Modal title="Thêm Hoá đơn" onClose={() => setBillModal({ open: false, data: { ...emptyBill } })}>
+      <Modal title="Thêm Hoá đơn" onClose={() => setBillModal(prev => ({ ...prev, open: false, data: { ...emptyBill } }))}>
         <FormField label="Học sinh *">
           <select className={selectClass} value={d.studentId} onChange={e => {
             const student = students.find(s => s.studentId === e.target.value);
@@ -1845,9 +1849,9 @@ export default function Home() {
   const renderUserModal = () => {
     if (!userModal.open) return null;
     const d = userModal.data;
-    const setD = (updates: Partial<UserForm>) => setUserModal({ ...userModal, data: { ...d, ...updates } });
+    const setD = (updates: Partial<UserForm>) => setUserModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     return (
-      <Modal title={userModal.editing ? 'Sửa Người dùng' : 'Thêm Người dùng'} onClose={() => setUserModal({ ...userModal, open: false })}>
+      <Modal title={userModal.editing ? 'Sửa Người dùng' : 'Thêm Người dùng'} onClose={() => setUserModal(prev => ({ ...prev, open: false }))}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Tên đăng nhập *"><input className={inputClass} value={d.username} onChange={e => setD({ username: e.target.value })} /></FormField>
           <FormField label="Mật khẩu *"><input type="password" className={inputClass} value={d.password} onChange={e => setD({ password: e.target.value })} /></FormField>
