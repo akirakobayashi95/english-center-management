@@ -15,7 +15,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, username, password, fullName, avatar, role, email, phone, status } = body;
+    const { userId, username, password, fullName, role, email, phone, status } = body;
 
     if (userId) {
       // Khi cập nhật: nếu password khác rỗng thì băm lại; nếu rỗng thì giữ nguyên
@@ -23,12 +23,12 @@ export async function POST(req: NextRequest) {
         const hashedPassword = await bcrypt.hash(password, 10);
         await db.user.update({
           where: { userId },
-          data: { username, password: hashedPassword, fullName, avatar, role, email, phone, status },
+          data: { username, password: hashedPassword, fullName, role, email, phone, status },
         });
       } else {
         await db.user.update({
           where: { userId },
-          data: { username, fullName, avatar, role, email, phone, status },
+          data: { username, fullName, role, email, phone, status },
         });
       }
       return NextResponse.json({ success: true, message: 'Cập nhật thành công!' });
@@ -48,7 +48,6 @@ export async function POST(req: NextRequest) {
         username,
         password: hashedPassword,
         fullName,
-        avatar,
         role: role || 'Giáo viên',
         email: email || '',
         phone: phone || '',

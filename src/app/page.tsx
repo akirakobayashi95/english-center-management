@@ -16,7 +16,7 @@ type ScheduleItem = { id: number; scheduleId: string; className: string; date: s
 type AttendanceItem = { id: number; attendanceId: string; studentId: string; className: string; date: string; dayOfWeek: string; status: string; note: string };
 type EvaluationItem = { id: number; evaluationId: string; studentId: string; studentName: string; className: string; month: string; note: string };
 type BillItem = { id: number; billId: string; studentId: string; studentName: string; className: string; month: string; sessions: number; amount: number; paid: number; payDate: string | null; status: string };
-type UserItem = { id: number; userId: string; username: string; password: string; fullName: string; avatar: string; role: string; email: string; phone: string; status: string };
+type UserItem = { id: number; userId: string; username: string; password: string; fullName: string; role: string; email: string; phone: string; status: string };
 type ProspectItem = { id: number; prospectId: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gender: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string; linkedStudentId: string | null };
 type DashboardData = {
   stats: { totalPresent: number; totalAbsent: number; totalExcused: number; totalAttendance: number; presentRate: number };
@@ -122,8 +122,8 @@ const emptyEvaluation: EvaluationForm = { studentId: '', studentName: '', classN
 type BillForm = { studentId: string; studentName: string; className: string; month: string; sessions: number; amount: number; paid: number; payDate: string; status: string };
 const emptyBill: BillForm = { studentId: '', studentName: '', className: '', month: '', sessions: 0, amount: 0, paid: 0, payDate: '', status: 'Chưa thanh toán' };
 
-type UserForm = { userId?: string; username: string; password: string; fullName: string; avatar: string; role: string; email: string; phone: string; status: string };
-const emptyUser: UserForm = { username: '', password: '', fullName: '', avatar: '', role: 'Giáo viên', email: '', phone: '', status: 'Active' };
+type UserForm = { userId?: string; username: string; password: string; fullName: string; role: string; email: string; phone: string; status: string };
+const emptyUser: UserForm = { username: '', password: '', fullName: '', role: 'Giáo viên', email: '', phone: '', status: 'Active' };
 
 type ProspectForm = { prospectId?: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gender: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string };
 const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: '', studentName: '', gender: 'Nam', gradeAge: '', desiredTime: '', testStatus: 'Chưa test', suggestedClass: '', note: '', status: 'Đang chờ' };
@@ -460,7 +460,7 @@ export default function Home() {
     const d = userModal.data;
     if (!d.username || !d.password || !d.fullName) { showToast('Vui lòng nhập đầy đủ!', 'error'); return; }
     setLoading(true);
-    const res = await api('/users', { method: 'POST', body: JSON.stringify({ userId: d.userId || null, username: d.username, password: d.password, fullName: d.fullName, avatar: d.avatar, role: d.role, email: d.email, phone: d.phone, status: d.status }) });
+    const res = await api('/users', { method: 'POST', body: JSON.stringify({ userId: d.userId || null, username: d.username, password: d.password, fullName: d.fullName, role: d.role, email: d.email, phone: d.phone, status: d.status }) });
     setLoading(false);
     if (res.success) { showToast(res.message); setUserModal({ ...userModal, open: false }); loadData('users'); }
     else showToast(res.message, 'error');
@@ -1135,11 +1135,10 @@ export default function Home() {
         </button>
       </div>
       <div className="overflow-x-auto">
-<table className="w-full text-xs sm:text-sm min-w-[700px]">
+<table className="w-full text-xs sm:text-sm min-w-[600px]">
               <thead>
                 <tr className="bg-gray-50">
                   <th className="text-left p-3 font-semibold text-gray-500">ID</th>
-                  <th className="text-left p-3 font-semibold text-gray-500">Avatar</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Tên đăng nhập</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Họ tên</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Vai trò</th>
@@ -1147,30 +1146,27 @@ export default function Home() {
                   <th className="text-left p-3 font-semibold text-gray-500">SĐT</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Trạng thái</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usersList.map((u, i) => (
-              <tr key={i} className="border-t hover:bg-gray-50">
-                <td className="p-3 text-gray-500">{u.userId}</td>
-                <td className="p-3">
-                  {u.avatar ? <img src={u.avatar} alt="avatar" className="w-8 h-8 rounded-full object-cover" /> : <span className="text-gray-300">—</span>}
-                </td>
-                <td className="p-3">{u.username}</td>
-                <td className="p-3 font-medium">{u.fullName}</td>
-                <td className="p-3">{u.role}</td>
-                <td className="p-3">{u.email}</td>
-                <td className="p-3">{u.phone}</td>
-                <td className="p-3 text-center"><StatusBadge status={u.status} /></td>
-                <td className="p-3 text-center">
-                  <div className="flex justify-center gap-1">
-                    <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setUserModal({ open: true, editing: true, data: { userId: u.userId, username: u.username, password: u.password, fullName: u.fullName, avatar: u.avatar, role: u.role, email: u.email, phone: u.phone, status: u.status } })}><Edit size={14} /></button>
-                    <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteUserItem(u.userId)}><Trash2 size={14} /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {usersList.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
+                </tr>
+              </thead>
+              <tbody>
+                {usersList.map((u, i) => (
+                  <tr key={i} className="border-t hover:bg-gray-50">
+                    <td className="p-3 text-gray-500">{u.userId}</td>
+                    <td className="p-3">{u.username}</td>
+                    <td className="p-3 font-medium">{u.fullName}</td>
+                    <td className="p-3">{u.role}</td>
+                    <td className="p-3">{u.email}</td>
+                    <td className="p-3">{u.phone}</td>
+                    <td className="p-3 text-center"><StatusBadge status={u.status} /></td>
+                    <td className="p-3 text-center">
+                      <div className="flex justify-center gap-1">
+                        <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setUserModal({ open: true, editing: true, data: { userId: u.userId, username: u.username, password: u.password, fullName: u.fullName, role: u.role, email: u.email, phone: u.phone, status: u.status } })}><Edit size={14} /></button>
+                        <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteUserItem(u.userId)}><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {usersList.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
           </tbody>
         </table>
       </div>
@@ -1834,12 +1830,6 @@ export default function Home() {
     const setD = (updates: Partial<UserForm>) => setUserModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     return (
       <Modal title={userModal.editing ? 'Sửa Người dùng' : 'Thêm Người dùng'} onClose={() => setUserModal(prev => ({ ...prev, open: false }))}>
-        <div className="flex items-center gap-4 mb-3">
-          <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-            {d.avatar ? <img src={d.avatar} alt="avatar" className="w-full h-full object-cover" /> : <User size={32} className="m-auto text-gray-300" />}
-          </div>
-          <FormField label="URL Avatar"><input className={inputClass} value={d.avatar} onChange={e => setD({ avatar: e.target.value })} placeholder="https://example.com/avatar.jpg" /></FormField>
-        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Tên đăng nhập *"><input className={inputClass} value={d.username} onChange={e => setD({ username: e.target.value })} /></FormField>
           <FormField label="Mật khẩu *"><input type="password" className={inputClass} value={d.password} onChange={e => setD({ password: e.target.value })} /></FormField>
