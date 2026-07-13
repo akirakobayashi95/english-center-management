@@ -16,12 +16,12 @@ type ScheduleItem = { id: number; scheduleId: string; className: string; date: s
 type AttendanceItem = { id: number; attendanceId: string; studentId: string; className: string; date: string; dayOfWeek: string; status: string; note: string };
 type EvaluationItem = { id: number; evaluationId: string; studentId: string; studentName: string; className: string; month: string; note: string };
 type BillItem = { id: number; billId: string; studentId: string; studentName: string; className: string; month: string; sessions: number; amount: number; paid: number; payDate: string | null; status: string };
-type UserItem = { id: number; userId: string; username: string; password: string; fullName: string; role: string; email: string; phone: string; status: string };
+type UserItem = { id: number; userId: string; username: string; password: string; fullName: string; avatar: string; role: string; email: string; phone: string; status: string };
 type ProspectItem = { id: number; prospectId: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gender: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string; linkedStudentId: string | null };
 type DashboardData = {
-  stats: { totalPresent: number; totalAbsent: number; totalExcused: number; totalLate: number; totalAttendance: number; presentRate: number };
-  dailyStats: Record<string, { present: number; absent: number; excused: number; late: number }>;
-  studentStats: Array<{ studentId: string; name: string; className: string; present: number; absent: number; excused: number; late: number; total: number; attendanceRate: number }>;
+  stats: { totalPresent: number; totalAbsent: number; totalExcused: number; totalAttendance: number; presentRate: number };
+  dailyStats: Record<string, { present: number; absent: number; excused: number }>;
+  studentStats: Array<{ studentId: string; name: string; className: string; present: number; absent: number; excused: number; total: number; attendanceRate: number }>;
   classes: string[];
 };
 type RevenueData = {
@@ -57,7 +57,6 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; icon: string }> 
   'Có mặt': { bg: 'bg-green-100', text: 'text-green-700', icon: '✅' },
   'Vắng': { bg: 'bg-red-100', text: 'text-red-700', icon: '❌' },
   'Có phép': { bg: 'bg-blue-100', text: 'text-blue-700', icon: '📋' },
-  'Đi trễ': { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: '⏰' },
   'Đang học': { bg: 'bg-green-100', text: 'text-green-700', icon: '' },
   'Nghỉ học': { bg: 'bg-red-100', text: 'text-red-700', icon: '' },
   'Bảo lưu': { bg: 'bg-gray-100', text: 'text-gray-600', icon: '' },
@@ -75,7 +74,7 @@ const btnSuccess = "px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white font-
 
 const pageTitles: Record<string, string> = {
   dashboard: 'Tổng quan', students: 'Học sinh', classes: 'Lớp học', schedule: 'Thời khoá biểu',
-  attendance: 'Điểm danh', evaluation: 'Đánh giá Học sinh', admission: 'Tuyển sinh', bills: 'Hoá đơn',
+  attendance: 'Điểm danh', evaluation: 'Đánh giá Học sinh', admission: 'Tuyển sinh', bills: 'Học phí',
   revenue: 'Thống kê doanh thu', users: 'Người dùng', settings: 'Cài đặt',
 };
 
@@ -87,7 +86,7 @@ const navItems = [
   { id: 'schedule', label: 'Thời khoá biểu', icon: Calendar, section: 'Quản lý' },
   { id: 'attendance', label: 'Điểm danh', icon: CheckSquare, section: 'Hoạt động' },
   { id: 'evaluation', label: 'Đánh giá Học sinh', icon: Star, section: 'Hoạt động' },
-  { id: 'bills', label: 'Hoá đơn', icon: Receipt, section: 'Hoạt động' },
+  { id: 'bills', label: 'Học phí', icon: Receipt, section: 'Hoạt động' },
   { id: 'revenue', label: 'Thống kê doanh thu', icon: TrendingUp, section: 'Tài chính' },
   { id: 'users', label: 'Người dùng', icon: UserCog, section: 'Hệ thống' },
   { id: 'settings', label: 'Cài đặt', icon: Settings, section: 'Hệ thống' },
@@ -123,8 +122,8 @@ const emptyEvaluation: EvaluationForm = { studentId: '', studentName: '', classN
 type BillForm = { studentId: string; studentName: string; className: string; month: string; sessions: number; amount: number; paid: number; payDate: string; status: string };
 const emptyBill: BillForm = { studentId: '', studentName: '', className: '', month: '', sessions: 0, amount: 0, paid: 0, payDate: '', status: 'Chưa thanh toán' };
 
-type UserForm = { userId?: string; username: string; password: string; fullName: string; role: string; email: string; phone: string; status: string };
-const emptyUser: UserForm = { username: '', password: '', fullName: '', role: 'Giáo viên', email: '', phone: '', status: 'Active' };
+type UserForm = { userId?: string; username: string; password: string; fullName: string; avatar: string; role: string; email: string; phone: string; status: string };
+const emptyUser: UserForm = { username: '', password: '', fullName: '', avatar: '', role: 'Giáo viên', email: '', phone: '', status: 'Active' };
 
 type ProspectForm = { prospectId?: string; contactDate: string; parentZalo: string; phone: string; studentName: string; gender: string; gradeAge: string; desiredTime: string; testStatus: string; suggestedClass: string; note: string; status: string };
 const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: '', studentName: '', gender: 'Nam', gradeAge: '', desiredTime: '', testStatus: 'Chưa test', suggestedClass: '', note: '', status: 'Đang chờ' };
@@ -406,7 +405,7 @@ export default function Home() {
   };
 
   const deleteBillItem = async (id: string) => {
-    if (!confirm('Xóa hoá đơn này?')) return;
+    if (!confirm('Xóa học phí này?')) return;
     const res = await api('/bills', { method: 'DELETE', body: JSON.stringify({ billId: id }) });
     if (res.success) { showToast(res.message); loadData('bills'); }
   };
@@ -453,7 +452,7 @@ export default function Home() {
       });
     }
     setLoading(false);
-    showToast(`Đã tạo hoá đơn cho tháng ${monthStr}`);
+    showToast(`Đã tạo học phí cho tháng ${monthStr}`);
     loadData('bills');
   };
 
@@ -461,7 +460,7 @@ export default function Home() {
     const d = userModal.data;
     if (!d.username || !d.password || !d.fullName) { showToast('Vui lòng nhập đầy đủ!', 'error'); return; }
     setLoading(true);
-    const res = await api('/users', { method: 'POST', body: JSON.stringify({ userId: d.userId || null, username: d.username, password: d.password, fullName: d.fullName, role: d.role, email: d.email, phone: d.phone, status: d.status }) });
+    const res = await api('/users', { method: 'POST', body: JSON.stringify({ userId: d.userId || null, username: d.username, password: d.password, fullName: d.fullName, avatar: d.avatar, role: d.role, email: d.email, phone: d.phone, status: d.status }) });
     setLoading(false);
     if (res.success) { showToast(res.message); setUserModal({ ...userModal, open: false }); loadData('users'); }
     else showToast(res.message, 'error');
@@ -561,7 +560,6 @@ export default function Home() {
       { label: 'Có mặt', value: data.totalPresent, color: '#22c55e' },
       { label: 'Vắng', value: data.totalAbsent, color: '#ef4444' },
       { label: 'Có phép', value: data.totalExcused, color: '#3b82f6' },
-      { label: 'Đi trễ', value: data.totalLate, color: '#f59e0b' },
     ];
     let cumulative = 0;
     const radius = 80;
@@ -647,23 +645,6 @@ export default function Home() {
     const r = revenueData;
     return (
       <div className="space-y-4 lg:space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-          {[
-            { icon: '✅', label: 'Có mặt', value: d.stats.totalPresent, color: 'bg-green-100' },
-            { icon: '❌', label: 'Vắng', value: d.stats.totalAbsent, color: 'bg-red-100' },
-            { icon: '📋', label: 'Có phép', value: d.stats.totalExcused, color: 'bg-blue-100' },
-            { icon: '⏰', label: 'Đi trễ', value: d.stats.totalLate, color: 'bg-yellow-100' },
-          ].map((s, i) => (
-            <div key={i} className="bg-white rounded-xl p-3 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-sm">
-              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl ${s.color} flex items-center justify-center text-lg sm:text-2xl flex-shrink-0`}>{s.icon}</div>
-              <div className="min-w-0">
-                <div className="text-xl sm:text-2xl font-bold leading-tight">{s.value}</div>
-                <div className="text-xs sm:text-sm text-gray-500 truncate">{s.label}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* Revenue summary on Dashboard */}
         {r && (
           <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-4 sm:p-6 shadow-sm text-white">
@@ -693,7 +674,7 @@ export default function Home() {
               </div>
             </div>
             <div className="flex flex-wrap gap-3 sm:gap-4 mt-3 text-xs sm:text-sm">
-              <span className="flex items-center gap-1">📄 {r.stats.billCount} hoá đơn</span>
+              <span className="flex items-center gap-1">📄 {r.stats.billCount} học phí</span>
               <span className="flex items-center gap-1">✅ {r.stats.paidCount} đã thu</span>
               <span className="flex items-center gap-1">⏳ {r.stats.partialCount} thu một phần</span>
               <span className="flex items-center gap-1">❌ {r.stats.unpaidCount} chưa thu</span>
@@ -729,7 +710,6 @@ export default function Home() {
                   <th className="text-center p-3 font-semibold text-gray-500">Có mặt</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Vắng</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Có phép</th>
-                  <th className="text-center p-3 font-semibold text-gray-500">Đi trễ</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Tổng</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Tỷ lệ</th>
                 </tr>
@@ -742,7 +722,6 @@ export default function Home() {
                     <td className="p-3 text-center text-green-600 font-semibold">{s.present}</td>
                     <td className="p-3 text-center text-red-600 font-semibold">{s.absent}</td>
                     <td className="p-3 text-center text-blue-600 font-semibold">{s.excused}</td>
-                    <td className="p-3 text-center text-yellow-600 font-semibold">{s.late}</td>
                     <td className="p-3 text-center">{s.total}</td>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
@@ -1018,7 +997,6 @@ export default function Home() {
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500" /> Có mặt</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500" /> Vắng</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-500" /> Có phép</span>
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-500" /> Đi trễ</span>
           <span className="text-gray-400 ml-2">Click vào ô để điểm danh</span>
         </div>
       </div>
@@ -1084,7 +1062,7 @@ export default function Home() {
   const renderBills = () => (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
-        <h3 className="font-bold"> Hoá đơn</h3>
+        <h3 className="font-bold"> Học phí</h3>
         <div className="flex gap-2 flex-wrap items-center">
           <div className="flex items-center gap-2">
             <button onClick={() => setAttendanceMonth(new Date(attendanceMonth.getFullYear(), attendanceMonth.getMonth() - 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronLeft size={16} /></button>
@@ -1092,13 +1070,13 @@ export default function Home() {
             <button onClick={() => setAttendanceMonth(new Date(attendanceMonth.getFullYear(), attendanceMonth.getMonth() + 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronRight size={16} /></button>
           </div>
           <button className={`${btnSuccess} flex items-center gap-1`} onClick={generateBillsFromAttendance}>
-            <DollarSign size={14} /> Tạo hoá đơn từ điểm danh
+            <DollarSign size={14} /> Tạo học phí từ điểm danh
           </button>
           <button className={`${btnPrimary} flex items-center gap-1`} onClick={() => {
             const monthStr = format(attendanceMonth, 'MM/yyyy');
             setBillModal({ open: true, data: { ...emptyBill, month: monthStr } });
           }}>
-            <Plus size={14} /> Thêm hoá đơn
+            <Plus size={14} /> Thêm học phí
           </button>
         </div>
       </div>
@@ -1141,7 +1119,7 @@ export default function Home() {
                 </tr>
               );
             })}
-            {bills.length === 0 && <tr><td colSpan={10} className="p-8 text-center text-gray-400">Chưa có dữ liệu. Click "Tạo hoá đơn từ điểm danh" để tự động tạo.</td></tr>}
+            {bills.length === 0 && <tr><td colSpan={10} className="p-8 text-center text-gray-400">Chưa có dữ liệu. Click "Tạo học phí từ điểm danh" để tự động tạo.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -1157,23 +1135,27 @@ export default function Home() {
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-xs sm:text-sm min-w-[600px]">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="text-left p-3 font-semibold text-gray-500">ID</th>
-              <th className="text-left p-3 font-semibold text-gray-500">Tên đăng nhập</th>
-              <th className="text-left p-3 font-semibold text-gray-500">Họ tên</th>
-              <th className="text-left p-3 font-semibold text-gray-500">Vai trò</th>
-              <th className="text-left p-3 font-semibold text-gray-500">Email</th>
-              <th className="text-left p-3 font-semibold text-gray-500">SĐT</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Trạng thái</th>
-              <th className="text-center p-3 font-semibold text-gray-500">Thao tác</th>
+<table className="w-full text-xs sm:text-sm min-w-[700px]">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-left p-3 font-semibold text-gray-500">ID</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Avatar</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Tên đăng nhập</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Họ tên</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Vai trò</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">Email</th>
+                  <th className="text-left p-3 font-semibold text-gray-500">SĐT</th>
+                  <th className="text-center p-3 font-semibold text-gray-500">Trạng thái</th>
+                  <th className="text-center p-3 font-semibold text-gray-500">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {usersList.map((u, i) => (
               <tr key={i} className="border-t hover:bg-gray-50">
                 <td className="p-3 text-gray-500">{u.userId}</td>
+                <td className="p-3">
+                  {u.avatar ? <img src={u.avatar} alt="avatar" className="w-8 h-8 rounded-full object-cover" /> : <span className="text-gray-300">—</span>}
+                </td>
                 <td className="p-3">{u.username}</td>
                 <td className="p-3 font-medium">{u.fullName}</td>
                 <td className="p-3">{u.role}</td>
@@ -1182,13 +1164,13 @@ export default function Home() {
                 <td className="p-3 text-center"><StatusBadge status={u.status} /></td>
                 <td className="p-3 text-center">
                   <div className="flex justify-center gap-1">
-                    <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setUserModal({ open: true, editing: true, data: { userId: u.userId, username: u.username, password: u.password, fullName: u.fullName, role: u.role, email: u.email, phone: u.phone, status: u.status } })}><Edit size={14} /></button>
+                    <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setUserModal({ open: true, editing: true, data: { userId: u.userId, username: u.username, password: u.password, fullName: u.fullName, avatar: u.avatar, role: u.role, email: u.email, phone: u.phone, status: u.status } })}><Edit size={14} /></button>
                     <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteUserItem(u.userId)}><Trash2 size={14} /></button>
                   </div>
                 </td>
               </tr>
             ))}
-            {usersList.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
+            {usersList.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
           </tbody>
         </table>
       </div>
@@ -1304,7 +1286,7 @@ export default function Home() {
                     });
                   })()}
                   <text x="80" y="78" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#1e293b">{r.stats.billCount}</text>
-                  <text x="80" y="96" textAnchor="middle" fontSize="11" fill="#64748b">hoá đơn</text>
+                  <text x="80" y="96" textAnchor="middle" fontSize="11" fill="#64748b">học phí</text>
                 </svg>
                 <div className="flex flex-col gap-2 w-full">
                   {r.byStatus.map((s, i) => (
@@ -1387,7 +1369,7 @@ export default function Home() {
         {/* Recent bills */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="p-5 border-b flex justify-between items-center">
-            <h3 className="font-bold">📋 Hoá đơn gần đây</h3>
+            <h3 className="font-bold">📋 Học phí gần đây</h3>
             <button className={`${btnSecondary} text-xs`} onClick={() => setCurrentPage('bills')}>Xem tất cả →</button>
           </div>
           <div className="overflow-x-auto">
@@ -1717,8 +1699,8 @@ export default function Home() {
             return (
               <div key={s.studentId} className={`p-3 border-2 rounded-xl cursor-pointer text-center transition-all ${colors.bg} ${status !== 'Có mặt' ? 'border-amber-400' : 'border-gray-200'}`}
                 onClick={() => {
-                  const statuses = ['Có mặt', 'Vắng', 'Có phép', 'Đi trễ'];
-                  const idx = (statuses.indexOf(status) + 1) % 4;
+                  const statuses = ['Có mặt', 'Vắng', 'Có phép'];
+                  const idx = (statuses.indexOf(status) + 1) % 3;
                   setQuickAttData({ ...quickAttData, [s.studentId]: statuses[idx] });
                 }}>
                 <div className="text-xs font-medium truncate">{s.name}</div>
@@ -1742,7 +1724,7 @@ export default function Home() {
       <Modal title={`Điểm danh - ${student?.name || ''} - ${formatDate(attCellModal.date)}`} onClose={() => setAttCellModal({ open: false, date: '', studentId: '', status: '', note: '' })}>
         <FormField label="Trạng thái">
           <div className="grid grid-cols-2 gap-2">
-            {['Có mặt', 'Vắng', 'Có phép', 'Đi trễ'].map(status => {
+            {['Có mặt', 'Vắng', 'Có phép'].map(status => {
               const colors = STATUS_COLORS[status];
               const isSelected = attCellModal.status === status;
               return (
@@ -1807,7 +1789,7 @@ export default function Home() {
     const d = billModal.data;
     const setD = (updates: Partial<BillForm>) => setBillModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     return (
-      <Modal title="Thêm Hoá đơn" onClose={() => setBillModal(prev => ({ ...prev, open: false, data: { ...emptyBill } }))}>
+      <Modal title="Thêm Học phí" onClose={() => setBillModal(prev => ({ ...prev, open: false, data: { ...emptyBill } }))}>
         <FormField label="Học sinh *">
           <select className={selectClass} value={d.studentId} onChange={e => {
             const student = students.find(s => s.studentId === e.target.value);
@@ -1852,6 +1834,12 @@ export default function Home() {
     const setD = (updates: Partial<UserForm>) => setUserModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     return (
       <Modal title={userModal.editing ? 'Sửa Người dùng' : 'Thêm Người dùng'} onClose={() => setUserModal(prev => ({ ...prev, open: false }))}>
+        <div className="flex items-center gap-4 mb-3">
+          <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+            {d.avatar ? <img src={d.avatar} alt="avatar" className="w-full h-full object-cover" /> : <User size={32} className="m-auto text-gray-300" />}
+          </div>
+          <FormField label="URL Avatar"><input className={inputClass} value={d.avatar} onChange={e => setD({ avatar: e.target.value })} placeholder="https://example.com/avatar.jpg" /></FormField>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Tên đăng nhập *"><input className={inputClass} value={d.username} onChange={e => setD({ username: e.target.value })} /></FormField>
           <FormField label="Mật khẩu *"><input type="password" className={inputClass} value={d.password} onChange={e => setD({ password: e.target.value })} /></FormField>
