@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!password) {
-      return NextResponse.json({ success: false, message: 'Mật khẩu không được để trỗng!' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'Mật khẩu không được để trống!' }, { status: 400 });
     }
 
     const count = await db.user.count();

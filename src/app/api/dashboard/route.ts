@@ -21,24 +21,22 @@ export async function GET(req: NextRequest) {
     const totalPresent = allAttendance.filter(a => a.status === 'Có mặt').length;
     const totalAbsent = allAttendance.filter(a => a.status === 'Vắng').length;
     const totalExcused = allAttendance.filter(a => a.status === 'Có phép').length;
-    const totalLate = allAttendance.filter(a => a.status === 'Đi trễ').length;
     const totalAttendance = allAttendance.length;
 
     // Daily stats
-    const dailyStats: Record<string, { present: number; absent: number; excused: number; late: number }> = {};
+    const dailyStats: Record<string, { present: number; absent: number; excused: number }> = {};
     allAttendance.forEach(a => {
       if (!a.date) return;
       if (!dailyStats[a.date]) {
-        dailyStats[a.date] = { present: 0, absent: 0, excused: 0, late: 0 };
+        dailyStats[a.date] = { present: 0, absent: 0, excused: 0 };
       }
       if (a.status === 'Có mặt') dailyStats[a.date].present++;
       else if (a.status === 'Vắng') dailyStats[a.date].absent++;
       else if (a.status === 'Có phép') dailyStats[a.date].excused++;
-      else if (a.status === 'Đi trễ') dailyStats[a.date].late++;
     });
 
     // Per-student stats
-    const studentStats: Record<string, { name: string; className: string; present: number; absent: number; excused: number; late: number; total: number }> = {};
+    const studentStats: Record<string, { name: string; className: string; present: number; absent: number; excused: number; total: number }> = {};
     allStudents.forEach(s => {
       studentStats[s.studentId] = {
         name: s.name,
@@ -46,7 +44,6 @@ export async function GET(req: NextRequest) {
         present: 0,
         absent: 0,
         excused: 0,
-        late: 0,
         total: 0,
       };
     });
@@ -57,7 +54,6 @@ export async function GET(req: NextRequest) {
         if (a.status === 'Có mặt') studentStats[a.studentId].present++;
         else if (a.status === 'Vắng') studentStats[a.studentId].absent++;
         else if (a.status === 'Có phép') studentStats[a.studentId].excused++;
-        else if (a.status === 'Đi trễ') studentStats[a.studentId].late++;
       }
     });
 
@@ -68,7 +64,6 @@ export async function GET(req: NextRequest) {
       present: s.present,
       absent: s.absent,
       excused: s.excused,
-      late: s.late,
       total: s.total,
       attendanceRate: s.total > 0 ? Math.round((s.present / s.total) * 100) : 0,
     }));
@@ -80,7 +75,6 @@ export async function GET(req: NextRequest) {
           totalPresent,
           totalAbsent,
           totalExcused,
-          totalLate,
           totalAttendance,
           presentRate: totalAttendance > 0 ? Math.round((totalPresent / totalAttendance) * 100) : 0,
         },
