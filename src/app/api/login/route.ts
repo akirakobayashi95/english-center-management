@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
         id: user.userId,
         username: user.username,
         name: user.fullName,
-        avatar: user.avatar,
         role: user.role,
       },
     });

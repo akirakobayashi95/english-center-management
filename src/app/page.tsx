@@ -151,7 +151,7 @@ const FormField = ({ label, children }: { label: string; children: React.ReactNo
 
 export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false);
-  const [user, setUser] = useState<{ name: string; role: string; avatar?: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; role: string } | null>(null);
   const [loginForm, setLoginForm] = useState({ username: 'admin', password: 'admin123' });
   const [loginError, setLoginError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -1909,8 +1909,8 @@ export default function Home() {
               <option value="">Tất cả</option>
               {classes.map(c => <option key={c.classId} value={c.name}>{c.name.length > 20 ? c.name.substring(0, 20) + '...' : c.name}</option>)}
             </select>
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink-0">
-              {user?.avatar ? <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-amber-500 flex items-center justify-center text-white font-bold text-sm">{user?.name?.charAt(0) || 'A'}</div>}
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-amber-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {user?.name?.charAt(0) || 'A'}
             </div>
             <div className="hidden md:block flex-shrink-0">
               <div className="text-sm font-semibold leading-tight">{user?.name}</div>
