@@ -4,46 +4,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Hum palette: named accents + amber->mint / orange->pear repoint, declared in
-   @theme so they generate --color-* utilities and are guaranteed emitted. */
+/* Self-hosted brand type — Ms. Myên English (Google Sans + JetBrains Mono) */
+@font-face {
+  font-family: "Google Sans";
+  src: url("/fonts/GoogleSans-VariableFont_GRAD-opsz-wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+/* DEVIATION: JetBrains Mono @font-face removed — this repo uses Google Sans ONLY
+   (see design.md deviation note). The woff2 files were deleted from public/fonts. */
+
+/* Ms. Myên English palette: amber/red remain their true hues (status semantics);
+   primary accent repointed to hot pink, gold as secondary. No Hum/mint repoint. */
 @theme {
-  --color-hum-mint: oklch(80% 0.16 150);
-  --color-hum-mint-deep: oklch(70% 0.18 150);
-  --color-hum-pear: oklch(86% 0.18 95);
-  --color-hum-pear-deep: oklch(76% 0.20 95);
-  --color-hum-cyan: oklch(66% 0.18 235);
-  --color-hum-cyan-deep: oklch(56% 0.20 235);
-  --color-hum-coral: oklch(68% 0.24 18);
-  --color-hum-coral-deep: oklch(58% 0.26 18);
-  --color-hum-lavender: oklch(74% 0.16 305);
-  --color-hum-lavender-deep: oklch(64% 0.18 305);
-
-  /* Repoint amber->mint and orange->pear at the token layer so the existing
-     dashboard (bg-amber-*, from-amber-500 to-orange-500) retints to Hum. */
-  --color-amber-50: oklch(95% 0.05 150);
-  --color-amber-100: oklch(90% 0.08 150);
-  --color-amber-200: oklch(85% 0.11 150);
-  --color-amber-300: oklch(80% 0.14 150);
-  --color-amber-400: oklch(76% 0.17 150);
-  --color-amber-500: oklch(80% 0.16 150);
-  --color-amber-600: oklch(70% 0.18 150);
-  --color-amber-700: oklch(62% 0.17 150);
-  --color-amber-800: oklch(52% 0.15 150);
-  --color-amber-900: oklch(42% 0.13 150);
-  --color-orange-50: oklch(96% 0.06 95);
-  --color-orange-100: oklch(92% 0.09 95);
-  --color-orange-200: oklch(88% 0.12 95);
-  --color-orange-300: oklch(86% 0.18 95);
-  --color-orange-400: oklch(82% 0.19 95);
-  --color-orange-500: oklch(86% 0.18 95);
-  --color-orange-600: oklch(76% 0.20 95);
-  --color-orange-700: oklch(68% 0.19 95);
-  --color-orange-800: oklch(60% 0.17 95);
-  --color-orange-900: oklch(52% 0.15 95);
-
-  /* Warning/pending — preserves original amber semantics (yellow-amber) so the
-     global amber→mint repoint doesn't turn "pending" states into "done". */
-  --color-warning: #fef3c6;
+  --color-warning: #faad14;
   --color-warning-foreground: #b75000;
 }
 
@@ -81,81 +56,107 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-card-white: var(--card-white);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-@layer base {
+  @layer base {
   :root {
-    --radius: 0.625rem;
-    /* Hum: warm cream paper + cool-near-black ink + mint multi-accent */
-    --background: oklch(97% 0.012 95);
-    --foreground: oklch(20% 0.012 250);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(20% 0.012 250);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(20% 0.012 250);
-    --primary: oklch(80% 0.16 150);          /* mint — lead accent */
-    --primary-foreground: oklch(20% 0.012 250);
-    --secondary: oklch(94% 0.016 95);
-    --secondary-foreground: oklch(20% 0.012 250);
-    --muted: oklch(94% 0.016 95);
-    --muted-foreground: oklch(52% 0.014 90);
-    --accent: oklch(94% 0.016 95);
-    --accent-foreground: oklch(20% 0.012 250);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(86% 0.014 90);
-    --input: oklch(86% 0.014 90);
-    --ring: oklch(70% 0.18 150);             /* mint-deep focus */
-    --chart-1: oklch(80% 0.16 150);
-    --chart-2: oklch(66% 0.18 235);
-    --chart-3: oklch(86% 0.18 95);
-    --chart-4: oklch(68% 0.24 18);
-    --chart-5: oklch(74% 0.16 305);
-    --sidebar: oklch(97% 0.012 95);
-    --sidebar-foreground: oklch(20% 0.012 250);
-    --sidebar-primary: oklch(80% 0.16 150);
-    --sidebar-primary-foreground: oklch(20% 0.012 250);
-    --sidebar-accent: oklch(94% 0.016 95);
-    --sidebar-accent-foreground: oklch(20% 0.012 250);
-    --sidebar-border: oklch(86% 0.014 90);
-    --sidebar-ring: oklch(70% 0.18 150);
+    /* Ms. Myên English: warm cream paper, ink, hot-pink lead, gold secondary */
+    /* Font roles — referenced by tailwind.config.ts fontFamily.sans/mono chain.
+       DEVIATION (deliberate override of design.md two-role spec): this repo uses Google Sans
+       ONLY — JetBrains Mono label/mono role removed. --font-label repointed to the Google Sans
+       stack so every consumer of the mono token (incl. Tailwind `font-mono`) renders Google Sans. */
+    --font-display: "Google Sans", "GoogleSans VariableFont GRAD opsz wght", system-ui, sans-serif;
+    --font-label: "Google Sans", "GoogleSans VariableFont GRAD opsz wght", system-ui, sans-serif;
+    --radius: 1.25rem; /* 20px — brand card radius */
+    --background: #faf6ee;       /* paper */
+    --foreground: #12171b;       /* ink */
+    --card: #f7f5ec;             /* paper face (dashboard cream) */
+    --card-white: #ffffff;       /* non-dashboard card surface — deviation from design.md single-surface token */
+    --card-foreground: #12171b;
+    --popover: #faf6ee;
+    --popover-foreground: #12171b;
+    --primary: #ff4d72;          /* hot pink — lead accent */
+    --primary-foreground: #faf6ee;
+    --secondary: #ece9e1;
+    --secondary-foreground: #12171b;
+    --muted: #6c6960;            /* muted TEXT role (design system) */
+    --muted-background: #f1ede6; /* was --muted fill; renamed to avoid role clash */
+    --muted-foreground: #6c6960;
+    --accent: #ff4d72;           /* hot pink — brand accent (design system) */
+    --accent-foreground: #12171b;
+    --destructive: #ff4d4f;      /* brand error hue (design system) */
+    --border: #d4d1c7;           /* rule */
+    --border-w: 1.5px;           /* design system border weight */
+    --radius-pill: 999px;        /* pill shape */
+    --radius-input: 12px;        /* input/select radius */
+    --radius-sm: 10px;           /* small radius */
+    --shadow-card: 0 12px 32px -16px rgba(18, 23, 27, 0.14), 0 1px 2px rgba(18, 23, 27, 0.06);
+    --shadow-card-hover: 0 24px 56px -20px rgba(18, 23, 27, 0.18), 0 2px 6px rgba(18, 23, 27, 0.08);
+    --shadow-btn: 0 4px 0 0 #d9365d, 0 6px 12px -3px rgba(217, 54, 93, 0.35);
+    /* Featured/floating card elevation — calm, brand-TINTED (not pure-black) so it reads as a
+       real lift against the warm cream --background, not a harsh hard-edge. Pink contact shadow
+       + warm ambient (per high-end-visual-design: tinted shadows, no pure black). Inner highlight
+       simulates a machined top edge (double-bezel). Replaces the earlier hard #d9365d offset that
+       blended into the cream page. */
+    --pink-deep: #d9365d;
+    --shadow-float: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 4px -1px rgba(217, 54, 93, 0.25), 0 12px 28px -8px rgba(217, 54, 93, 0.28), 0 24px 48px -16px rgba(18, 23, 27, 0.12);
+    --input: #d4d1c7;
+    --ring: #ff4d72;             /* pink focus */
+    --gold: #ffc928;             /* accent-secondary */
+    --outline-pink: #d9367a;     /* outlined field border */
+    --chart-1: #ff4d72;          /* pink */
+    --chart-2: #52c41a;          /* success green */
+    --chart-3: #ffc928;          /* gold */
+    --chart-4: #faad14;          /* warning */
+    --chart-5: #722ed1;          /* purple (level/domain) */
+    --sidebar: #faf6ee;
+    --sidebar-foreground: #12171b;
+    --sidebar-primary: #ff4d72;
+    --sidebar-primary-foreground: #faf6ee;
+    --sidebar-accent: #f1ede6;
+    --sidebar-accent-foreground: #12171b;
+    --sidebar-border: #d4d1c7;
+    --sidebar-ring: #ff4d72;
   }
 
   .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(80% 0.16 150);
-    --primary-foreground: oklch(20% 0.012 250);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(70% 0.18 150);
-    --chart-1: oklch(48% 0.16 150);
-    --chart-2: oklch(66% 0.18 235);
-    --chart-3: oklch(86% 0.18 95);
-    --chart-4: oklch(68% 0.24 18);
-    --chart-5: oklch(74% 0.16 305);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(80% 0.16 150);
-    --sidebar-primary-foreground: oklch(20% 0.012 250);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(70% 0.18 150);
+    --background: #141414;
+    --foreground: #f5f2ea;
+    --card: #1d1d1d;
+    --card-foreground: #f5f2ea;
+    --popover: #1d1d1d;
+    --popover-foreground: #f5f2ea;
+    --primary: #dc667b;
+    --primary-foreground: #faf6ee;
+    --secondary: #303030;
+    --secondary-foreground: #f5f2ea;
+    --muted: #272727;
+    --muted-foreground: #adadad;
+    --accent: #272727;
+    --accent-foreground: #f5f2ea;
+    --destructive: #dc6966;
+    --border: #3e3e3e;
+    --input: #3e3e3e;
+    --ring: #dc667b;
+    --gold: #dcbb49;
+    --chart-1: #dc667b;
+    --chart-2: #64b537;
+    --chart-3: #dcbb49;
+    --chart-4: #dcaa37;
+    --chart-5: #9254de;
+    --sidebar: #1d1d1d;
+    --sidebar-foreground: #f5f2ea;
+    --sidebar-primary: #dc667b;
+    --sidebar-primary-foreground: #faf6ee;
+    --sidebar-accent: #272727;
+    --sidebar-accent-foreground: #f5f2ea;
+    --sidebar-border: #3e3e3e;
+    --sidebar-ring: #dc667b;
   }
 
   * {
@@ -163,5 +164,48 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Field variants — design.md: surface (#f7f5ec / --card) fill, 1.5px rule,
+     pink focus ring. Filled = rule border; Outlined = pink lead border.
+     ponytail: cream surface (not pure white) per design.md surface token;
+     if a stronger field-on-card contrast is ever needed, switch to var(--background)
+     (#faf6ee) here once, not per-element. */
+  .field-filled {
+    background-color: #ffffff;
+    border-color: var(--input);
+    border-style: solid;
+    border-width: var(--border-w);
+    border-radius: var(--radius-input);
+  }
+  .field-filled:focus {
+    border-color: var(--ring);
+    outline: none;
+  }
+
+  .field-outlined {
+    background-color: #ffffff;
+    border-color: var(--outline-pink);
+    border-style: solid;
+    border-width: var(--border-w);
+    border-radius: var(--radius-input);
+  }
+  .field-outlined:focus {
+    border-color: var(--ring);
+    outline: none;
+  }
+
+  .field-filled[readonly],
+  .field-outlined[readonly] {
+    background-color: #f1ede6;
+    opacity: 0.7;
+    cursor: default;
+  }
+
+  /* Featured revenue banner — calm spring entry (transform/opacity only, GPU-safe).
+     Does NOT fade the stat values (render immediately); only the card chrome eases in. */
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.985); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 }
