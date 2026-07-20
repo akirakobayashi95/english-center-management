@@ -3,10 +3,10 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
+    "dev": "next dev -p 3000",
+    "build": "next build && if exist .next\\standalone ( xcopy /E /I /Y .next\\static .next\\standalone\\.next\\static >nul && xcopy /E /I /Y public .next\\standalone\\public >nul )",
     "build:vercel": "prisma generate && next build",
-    "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
+    "start": "NODE_ENV=production bun .next/standalone/server.js",
     "lint": "eslint .",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import {
   LayoutDashboard, Users, School, Calendar, CheckSquare,
@@ -45,10 +46,10 @@ const PROSPECT_STATUSES = ['Đang chờ', 'Đã nhập học', 'Không nhập h�
 const TEST_STATUS_COLORS: Record<string, string> = {
   'Đã test': 'bg-green-100 text-green-700',
   'Chưa test': 'bg-gray-100 text-gray-600',
-  'Hẹn test': 'bg-amber-100 text-amber-700',
+  'Hẹn test': 'bg-warning text-warning-foreground',
 };
 const PROSPECT_STATUS_COLORS: Record<string, string> = {
-  'Đang chờ': 'bg-amber-100 text-amber-700',
+  'Đang chờ': 'bg-warning text-warning-foreground',
   'Đã nhập học': 'bg-green-100 text-green-700',
   'Không nhập học': 'bg-red-100 text-red-700',
 };
@@ -65,10 +66,14 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; icon: string }> 
   'Thanh toán một phần': { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: '' },
 };
 
-const inputClass = "w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-amber-500 outline-none text-sm";
-const selectClass = "w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-amber-500 outline-none text-sm bg-white";
-const btnPrimary = "px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg text-sm transition-colors";
-const btnSecondary = "px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg text-sm transition-colors";
+const inputClass = "w-full px-3 py-2 text-sm field-filled";
+const selectClass = "w-full px-3 py-2 text-sm field-filled";
+const filledInput = "w-full px-3 py-2 text-sm field-filled";
+const filledSelect = "w-full px-3 py-2 text-sm field-filled";
+const outlinedInput = "w-full px-3 py-2 text-sm field-outlined";
+const outlinedSelect = "w-full px-3 py-2 text-sm field-outlined";
+const btnPrimary = "px-4 py-2 bg-[#ff4d72] hover:bg-[#d9365d] text-white font-semibold rounded-lg text-sm transition-colors";
+const btnSecondary = "px-4 py-2 bg-[#f1ede6] hover:bg-[#e6e1d6] text-[#6c6960] font-semibold rounded-lg text-sm transition-colors";
 const btnDanger = "px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg text-sm transition-colors";
 const btnSuccess = "px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg text-sm transition-colors";
 
@@ -132,10 +137,10 @@ const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: ''
 // Nếu để trong Home(), mỗi keystroke tạo ra reference mới → React remount input → mất focus.
 const Modal = ({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-    <div className="bg-white rounded-2xl w-full max-w-lg mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-      <div className="flex justify-between items-center p-5 border-b">
-        <h3 className="text-lg font-bold">{title}</h3>
-        <button onClick={onClose} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"><X size={16} /></button>
+    <div className="bg-card-white w-full max-w-lg mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto shadow-card" style={{ borderRadius: 'var(--radius)', border: 'var(--border-w) solid var(--border)' }} onClick={e => e.stopPropagation()}>
+      <div className="flex justify-between items-center p-5 border-b border-border" style={{ borderBottomWidth: 'var(--border-w)' }}>
+        <h3 className="text-lg font-bold text-foreground">{title}</h3>
+        <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted-background hover:bg-secondary flex items-center justify-center"><X size={16} /></button>
       </div>
       <div className="p-5">{children}</div>
     </div>
@@ -144,7 +149,7 @@ const Modal = ({ title, children, onClose }: { title: string; children: React.Re
 
 const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="mb-4">
-    <label className="block text-sm font-semibold mb-1 text-gray-700">{label}</label>
+    <label className="block text-sm font-bold mb-1 text-muted-foreground">{label}</label>
     {children}
   </div>
 );
@@ -545,12 +550,12 @@ export default function Home() {
   // Status Badge
   const StatusBadge = ({ status }: { status: string }) => {
     const colors = STATUS_COLORS[status] || { bg: 'bg-gray-100', text: 'text-gray-600' };
-    return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${colors.bg} ${colors.text}`}>{status}</span>;
+    return <span className={`px-2.5 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`} style={{ borderRadius: 'var(--radius-pill)' }}>{status}</span>;
   };
 
   const LevelBadge = ({ level }: { level: string }) => {
     const color = LEVEL_COLORS[level] || 'bg-gray-100 text-gray-600';
-    return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}>{level}</span>;
+    return <span className={`px-2.5 py-1 text-xs font-semibold ${color}`} style={{ borderRadius: 'var(--radius-pill)' }}>{level}</span>;
   };
 
   // Donut Chart
@@ -612,26 +617,31 @@ export default function Home() {
   // Login Page
   if (!loggedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="bg-white rounded-2xl p-10 w-full max-w-md shadow-2xl">
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-4">📚</div>
-            <h1 className="text-2xl font-bold text-slate-800">MsMyenEnglish</h1>
-            <p className="text-gray-500 mt-1">Trung Tâm Dạy Tiếng Anh</p>
+      <div className="min-h-screen bg-gradient-to-br from-[#fff0f3] via-background to-[#fef6e0] flex items-center justify-center">
+        <div className="bg-card-white p-10 w-full max-w-md shadow-card border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+          <div className="text-center mb-8 flex justify-center">
+            <Image
+              src="/logo.png"
+              alt="Ms. Myên English Center"
+              width={1024}
+              height={1024}
+              priority
+              className="w-[130px] h-auto"
+            />
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold mb-1">Tên đăng nhập</label>
-              <input type="text" value={loginForm.username} onChange={e => setLoginForm({ ...loginForm, username: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-amber-500 outline-none" />
+              <label className="block text-sm font-semibold mb-1 text-foreground">Tên đăng nhập</label>
+              <input type="text" value={loginForm.username} onChange={e => setLoginForm({ ...loginForm, username: e.target.value })} className="w-full px-4 py-3 field-filled" />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Mật khẩu</label>
-              <input type="password" value={loginForm.password} onChange={e => setLoginForm({ ...loginForm, password: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleLogin()} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-amber-500 outline-none" />
+              <label className="block text-sm font-semibold mb-1 text-foreground">Mật khẩu</label>
+              <input type="password" value={loginForm.password} onChange={e => setLoginForm({ ...loginForm, password: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleLogin()} className="w-full px-4 py-3 field-filled" />
             </div>
-            <button onClick={handleLogin} disabled={loading} className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition-colors disabled:opacity-50">
+              <button onClick={handleLogin} disabled={loading} className="w-full py-3 bg-primary text-primary-foreground font-bold transition-colors disabled:opacity-50" style={{ borderRadius: 'var(--radius-pill)', boxShadow: 'var(--shadow-btn)' }}>
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
-            {loginError && <p className="text-red-500 text-sm text-center">{loginError}</p>}
+            {loginError && <p className="text-sm text-center" style={{ color: 'var(--destructive)' }}>{loginError}</p>}
           </div>
         </div>
       </div>
@@ -640,62 +650,74 @@ export default function Home() {
 
   // Render pages
   const renderDashboard = () => {
-    if (!dashboardData) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" /></div>;
+    if (!dashboardData) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
     const d = dashboardData;
     const r = revenueData;
     return (
       <div className="space-y-4 lg:space-y-6">
         {/* Revenue summary on Dashboard */}
         {r && (
-          <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-4 sm:p-6 shadow-sm text-white">
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h3 className="font-bold text-sm sm:text-base flex items-center gap-2"><TrendingUp size={18} /> Thống kê Doanh thu</h3>
-              <button className="text-xs sm:text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg font-semibold transition-colors" onClick={() => setCurrentPage('revenue')}>Chi tiết →</button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              <div className="bg-white/15 rounded-lg p-3">
-                <div className="text-xs opacity-90">Tổng doanh thu</div>
-                <div className="text-base sm:text-xl font-bold mt-1 break-all">{formatCurrency(r.stats.totalAmount)}</div>
+          <div className="relative overflow-hidden text-white" style={{ borderRadius: 'var(--radius)', boxShadow: 'var(--shadow-float)', background: 'linear-gradient(135deg, #FF4D72 0%, #F58CC9 35%, #CBB8FF 70%, #A8D8FF 100%)', animation: 'floatIn 600ms cubic-bezier(0.32,0.72,0) 1 both' }}>
+            {/* Tinted scrim — pink-deep at top, soft blue tint at the (one-off) pastel-lavender→blue end.
+                Keeps white heading legible without the muddy pure-black wash. NOTE: this 4-stop
+                pink→pink→lavender→blue gradient is an intentional one-off OUTSIDE the --primary/
+                --secondary/--gold brand hue family, not a design-system token. */}
+            <div className="absolute inset-0" style={{ borderRadius: 'var(--radius)', background: 'linear-gradient(135deg, rgba(217,54,93,0.22) 0%, rgba(217,54,93,0.06) 55%, rgba(80,140,200,0.14) 100%)' }} aria-hidden="true" />
+            <div className="relative p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="font-bold text-sm sm:text-lg flex items-center gap-2" style={{ textShadow: '0 1px 3px rgba(18,23,27,0.45)' }}><TrendingUp size={18} /> Thống kê Doanh thu</h3>
+                <button
+                  className="group inline-flex items-center gap-1.5 text-xs sm:text-sm bg-primary hover:bg-primary/90 active:scale-[0.97] px-3 py-1 rounded-lg font-semibold text-primary-foreground transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_2px_10px_rgba(217,54,93,0.45)]"
+                  onClick={() => setCurrentPage('revenue')}>
+                  Chi tiết
+                  <span className="w-4 h-4 rounded-full bg-white/30 group-hover:translate-x-0.5 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] flex items-center justify-center text-[10px]">→</span>
+                </button>
               </div>
-              <div className="bg-white/15 rounded-lg p-3">
-                <div className="text-xs opacity-90">Đã thu</div>
-                <div className="text-base sm:text-xl font-bold mt-1 break-all">{formatCurrency(r.stats.totalPaid)}</div>
-              </div>
-              <div className="bg-white/15 rounded-lg p-3">
-                <div className="text-xs opacity-90">Còn nợ</div>
-                <div className="text-base sm:text-xl font-bold mt-1 break-all">{formatCurrency(r.stats.totalDebt)}</div>
-              </div>
-              <div className="bg-white/15 rounded-lg p-3">
-                <div className="text-xs opacity-90">Tỷ lệ thu</div>
-                <div className="text-base sm:text-xl font-bold mt-1">{r.stats.collectionRate}%</div>
-                <div className="w-full h-1.5 bg-white/25 rounded-full overflow-hidden mt-1.5">
-                  <div className="h-full bg-white rounded-full transition-all" style={{ width: `${r.stats.collectionRate}%` }} />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                <div className="bg-card/85 rounded-lg p-3 text-foreground">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Tổng doanh thu</div>
+                  <div className="text-base sm:text-xl font-bold mt-1 break-all tabular-nums">{formatCurrency(r.stats.totalAmount)}</div>
+                </div>
+                <div className="bg-card/85 rounded-lg p-3 text-foreground">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Đã thu</div>
+                  <div className="text-base sm:text-xl font-bold mt-1 break-all tabular-nums">{formatCurrency(r.stats.totalPaid)}</div>
+                </div>
+                <div className="bg-card/85 rounded-lg p-3 text-foreground">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Còn nợ</div>
+                  <div className="text-base sm:text-xl font-bold mt-1 break-all tabular-nums">{formatCurrency(r.stats.totalDebt)}</div>
+                </div>
+                <div className="bg-card/85 rounded-lg p-3 text-foreground">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Tỷ lệ thu</div>
+                  <div className="text-base sm:text-xl font-bold mt-1 tabular-nums">{r.stats.collectionRate}%</div>
+                  <div className="w-full h-1.5 bg-black/15 rounded-full overflow-hidden mt-1.5">
+                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${r.stats.collectionRate}%` }} />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-3 sm:gap-4 mt-3 text-xs sm:text-sm">
-              <span className="flex items-center gap-1">📄 {r.stats.billCount} học phí</span>
-              <span className="flex items-center gap-1">✅ {r.stats.paidCount} đã thu</span>
-              <span className="flex items-center gap-1">⏳ {r.stats.partialCount} thu một phần</span>
-              <span className="flex items-center gap-1">❌ {r.stats.unpaidCount} chưa thu</span>
+              <div className="flex flex-wrap gap-2 sm:gap-3 mt-3">
+                <span className="flex items-center gap-1 bg-card/85 text-foreground rounded-lg px-2.5 py-1 text-xs sm:text-sm"><span>📄</span><span className="tabular-nums">{r.stats.billCount}</span><span>học phí</span></span>
+                <span className="flex items-center gap-1 bg-card/85 text-foreground rounded-lg px-2.5 py-1 text-xs sm:text-sm"><span>✅</span><span className="tabular-nums">{r.stats.paidCount}</span><span>đã thu</span></span>
+                <span className="flex items-center gap-1 bg-card/85 text-foreground rounded-lg px-2.5 py-1 text-xs sm:text-sm"><span>⏳</span><span className="tabular-nums">{r.stats.partialCount}</span><span>thu một phần</span></span>
+                <span className="flex items-center gap-1 bg-card/85 text-foreground rounded-lg px-2.5 py-1 text-xs sm:text-sm"><span>❌</span><span className="tabular-nums">{r.stats.unpaidCount}</span><span>chưa thu</span></span>
+              </div>
             </div>
           </div>
         )}
         <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
-          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm overflow-x-auto">
-            <h3 className="font-bold mb-4 text-sm sm:text-base">📈 Tỷ lệ trạng thái</h3>
+          <div className="bg-card p-4 sm:p-6 shadow-card overflow-x-auto border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+            <h3 className="font-bold mb-4 text-sm sm:text-base text-foreground">📈 Tỷ lệ trạng thái</h3>
             <div className="min-w-[280px]">
               <DonutChart data={d.stats} />
             </div>
           </div>
-          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
-            <h3 className="font-bold mb-4 text-sm sm:text-base">📊 Chi tiết theo ngày</h3>
+          <div className="bg-card p-4 sm:p-6 shadow-card border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+            <h3 className="font-bold mb-4 text-sm sm:text-base text-foreground">📊 Chi tiết theo ngày</h3>
             <BarChart dailyStats={d.dailyStats} />
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b flex justify-between items-center">
-            <h3 className="font-bold">📋 Thống kê chi tiết Điểm danh</h3>
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+          <div className="p-5 border-b border-border flex justify-between items-center" style={{ borderBottomWidth: 'var(--border-w)' }}>
+            <h3 className="font-bold text-foreground">📋 Thống kê chi tiết Điểm danh</h3>
             <div className="flex gap-2">
               <button className={`${btnSecondary} flex items-center gap-1`}><Download size={14} /> Xuất Excel</button>
               <button className={`${btnSecondary} flex items-center gap-1`} onClick={() => window.print()}><Printer size={14} /> In</button>
@@ -704,19 +726,19 @@ export default function Home() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[600px]">
               <thead>
-                <tr className="bg-gray-50">
-                  <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
-                  <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
-                  <th className="text-center p-3 font-semibold text-gray-500">Có mặt</th>
-                  <th className="text-center p-3 font-semibold text-gray-500">Vắng</th>
-                  <th className="text-center p-3 font-semibold text-gray-500">Có phép</th>
-                  <th className="text-center p-3 font-semibold text-gray-500">Tổng</th>
-                  <th className="text-left p-3 font-semibold text-gray-500">Tỷ lệ</th>
+                <tr className="bg-muted-background">
+                  <th className="text-left p-3 font-semibold text-muted-foreground">Học sinh</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground">Lớp</th>
+                  <th className="text-center p-3 font-semibold text-muted-foreground">Có mặt</th>
+                  <th className="text-center p-3 font-semibold text-muted-foreground">Vắng</th>
+                  <th className="text-center p-3 font-semibold text-muted-foreground">Có phép</th>
+                  <th className="text-center p-3 font-semibold text-muted-foreground">Tổng</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground">Tỷ lệ</th>
                 </tr>
               </thead>
               <tbody>
                 {d.studentStats.map((s, i) => (
-                  <tr key={i} className="border-t hover:bg-gray-50">
+                  <tr key={i} className="border-t border-border hover:bg-muted-background">
                     <td className="p-3 font-medium">{s.name}</td>
                     <td className="p-3">{s.className}</td>
                     <td className="p-3 text-center text-green-600 font-semibold">{s.present}</td>
@@ -742,13 +764,13 @@ export default function Home() {
   };
 
   const renderStudents = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
-        <h3 className="font-bold text-sm sm:text-base"> Danh sách Học sinh</h3>
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+      <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
+        <h3 className="font-bold text-sm sm:text-base uppercase tracking-[0.12em] text-muted-foreground">Danh sách học sinh</h3>
         <div className="flex gap-2 items-center w-full">
           <div className="relative flex-1 min-w-0">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input type="text" placeholder="Tìm học sinh..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8 pr-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-amber-500 outline-none w-full" />
+            <input type="text" placeholder="Tìm học sinh..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8 pr-3 py-2 field-filled w-full" />
           </div>
           <button className={`${btnPrimary} flex items-center gap-1 flex-shrink-0`} onClick={() => setStudentModal({ open: true, editing: false, data: { ...emptyStudent } })}>
             <Plus size={14} /> <span className="hidden sm:inline">Thêm</span>
@@ -758,22 +780,22 @@ export default function Home() {
       <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50">
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">ID</th>
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">Họ tên</th>
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden sm:table-cell">Ngày sinh</th>
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden md:table-cell">Giới tính</th>
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden lg:table-cell">Tên Zalo PH</th>
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm hidden lg:table-cell">SĐT (nếu có)</th>
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">Lớp</th>
-              <th className="text-left p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm">Trạng thái</th>
-              <th className="text-center p-2 sm:p-3 font-semibold text-gray-500 text-xs sm:text-sm"></th>
+            <tr className="bg-muted-background">
+              <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm">ID</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm">Họ tên</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm hidden sm:table-cell">Ngày sinh</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm hidden md:table-cell">Giới tính</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm hidden lg:table-cell">Tên Zalo PH</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm hidden lg:table-cell">SĐT (nếu có)</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm">Lớp</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm">Trạng thái</th>
+              <th className="text-center p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm"></th>
             </tr>
           </thead>
           <tbody>
             {students.map((s, i) => (
-              <tr key={i} className="border-t hover:bg-gray-50">
-                <td className="p-3 text-gray-500">{s.studentId}</td>
+              <tr key={i} className="border-t border-border hover:bg-muted-background">
+                <td className="p-3 text-muted-foreground">{s.studentId}</td>
                 <td className="p-3 font-medium">{s.name}</td>
                 <td className="p-3">{formatDate(s.birthDate)}</td>
                 <td className="p-3">{s.gender}</td>
@@ -783,13 +805,13 @@ export default function Home() {
                 <td className="p-3"><StatusBadge status={s.status} /></td>
                 <td className="p-3 text-center">
                   <div className="flex justify-center gap-1">
-                    <button className="p-1 hover:bg-gray-100 rounded" onClick={() => setStudentModal({ open: true, editing: true, data: { studentId: s.studentId, name: s.name, birthDate: s.birthDate || '', gender: s.gender, phone: s.phone, parentZalo: s.parentZalo, address: s.address, className: s.className, note: s.note, status: s.status } })}><Edit size={14} /></button>
+                    <button className="p-1 hover:bg-muted-background rounded" onClick={() => setStudentModal({ open: true, editing: true, data: { studentId: s.studentId, name: s.name, birthDate: s.birthDate || '', gender: s.gender, phone: s.phone, parentZalo: s.parentZalo, address: s.address, className: s.className, note: s.note, status: s.status } })}><Edit size={14} /></button>
                     <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteStudent(s.studentId)}><Trash2 size={14} /></button>
                   </div>
                 </td>
               </tr>
             ))}
-            {students.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>}
+            {students.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Chưa có dữ liệu</td></tr>}
           </tbody>
         </table>
       </div>
@@ -797,8 +819,8 @@ export default function Home() {
   );
 
   const renderClasses = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-3 sm:p-5 border-b flex justify-between items-center gap-2">
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+      <div className="p-3 sm:p-5 border-b flex justify-between items-center gap-2" style={{ borderBottomWidth: 'var(--border-w)' }}>
         <h3 className="font-bold text-sm sm:text-base"> Danh sách Lớp học</h3>
         <button className={`${btnPrimary} flex items-center gap-1 text-xs sm:text-sm`} onClick={() => setClassModal({ open: true, editing: false, data: { ...emptyClass } })}>
           <Plus size={14} /> <span className="hidden sm:inline">Thêm lớp</span>
@@ -807,7 +829,7 @@ export default function Home() {
       <div className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50">
+            <tr className="bg-muted-background">
               <th className="text-left p-3 font-semibold text-gray-500">ID</th>
               <th className="text-left p-3 font-semibold text-gray-500">Tên lớp</th>
               <th className="text-left p-3 font-semibold text-gray-500">Trình độ</th>
@@ -822,7 +844,7 @@ export default function Home() {
             {classes.map((c, i) => {
               const count = students.filter(s => s.className === c.name).length;
               return (
-                <tr key={i} className="border-t hover:bg-gray-50">
+                <tr key={i} className="border-t hover:bg-muted-background">
                   <td className="p-3 text-gray-500">{c.classId}</td>
                   <td className="p-3 font-medium">{c.name}</td>
                   <td className="p-3"><LevelBadge level={c.level} /></td>
@@ -858,8 +880,8 @@ export default function Home() {
       return 'bg-gray-100 text-gray-600';
     };
     return (
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+      <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+        <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
           <div className="flex items-center gap-3">
             <button onClick={() => setScheduleMonth(new Date(scheduleMonth.getFullYear(), scheduleMonth.getMonth() - 1))} className="p-2 hover:bg-gray-100 rounded-lg"><ChevronLeft size={18} /></button>
             <h3 className="font-bold">{format(scheduleMonth, 'MMMM yyyy')}</h3>
@@ -877,8 +899,8 @@ export default function Home() {
         </div>
         <div className="p-2 sm:p-4">
           <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
-            {dayNames.map(d => <div key={d} className="text-center py-1 sm:py-2 text-[10px] sm:text-sm font-semibold text-gray-500 bg-gray-50 rounded">{d}</div>)}
-            {Array.from({ length: startDay }).map((_, i) => <div key={`e-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-gray-50 rounded" />)}
+            {dayNames.map(d => <div key={d} className="text-center py-1 sm:py-2 text-[10px] sm:text-sm font-semibold text-gray-500 bg-muted-background rounded">{d}</div>)}
+            {Array.from({ length: startDay }).map((_, i) => <div key={`e-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-muted-background rounded" />)}
             {days.map((day, i) => {
               const dateStr = format(day, 'yyyy-MM-dd');
               const daySchedules = schedules.filter(s => s.date === dateStr);
@@ -908,8 +930,8 @@ export default function Home() {
     const filteredStudents = selectedClass ? students.filter(s => s.className === selectedClass) : students;
 
     return (
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+      <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+        <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-sm sm:text-base"> Bảng điểm danh</h3>
@@ -938,8 +960,8 @@ export default function Home() {
         <div className="overflow-x-auto -mx-3 sm:mx-0">
           <table className="w-full text-xs sm:text-sm min-w-[600px] sm:min-w-[800px]">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="text-left p-2 font-semibold text-gray-500 sticky left-0 bg-gray-50 z-10 min-w-[160px]">Học sinh</th>
+              <tr className="bg-muted-background">
+                <th className="text-left p-2 font-semibold text-gray-500 sticky left-0 bg-muted-background z-10 min-w-[160px]">Học sinh</th>
                 {days.map(day => {
                   const dateStr = format(day, 'yyyy-MM-dd');
                   const dayOfWeek = getDayOfWeek(dateStr);
@@ -958,8 +980,8 @@ export default function Home() {
                 const studentAtt = attendance.filter(a => a.studentId === s.studentId);
                 const presentCount = studentAtt.filter(a => a.status === 'Có mặt').length;
                 return (
-                  <tr key={s.studentId} className="border-t hover:bg-gray-50">
-                    <td className="p-2 font-medium sticky left-0 bg-white z-10">{s.name}</td>
+                  <tr key={s.studentId} className="border-t hover:bg-muted-background">
+                    <td className="p-2 font-medium sticky left-0 bg-card-white z-10">{s.name}</td>
                     {days.map(day => {
                       const dateStr = format(day, 'yyyy-MM-dd');
                       const record = attendance.find(a => a.studentId === s.studentId && a.date === dateStr);
@@ -980,7 +1002,7 @@ export default function Home() {
                       return (
                         <td key={dateStr} className="p-1 text-center">
                           <div
-                            className="w-8 h-8 rounded-lg bg-gray-100 mx-auto cursor-pointer hover:bg-gray-200 transition-colors"
+                            className="w-8 h-8 rounded-lg bg-muted-background mx-auto cursor-pointer hover:bg-secondary transition-colors"
                             onClick={() => setAttCellModal({ open: true, date: dateStr, studentId: s.studentId, status: '', note: '' })}
                           />
                         </td>
@@ -993,7 +1015,7 @@ export default function Home() {
             </tbody>
           </table>
         </div>
-        <div className="flex gap-4 p-3 bg-gray-50 border-t text-sm">
+        <div className="flex gap-4 p-3 bg-muted-background border-t border-border text-sm">
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500" /> Có mặt</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500" /> Vắng</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-500" /> Có phép</span>
@@ -1004,8 +1026,8 @@ export default function Home() {
   };
 
   const renderEvaluations = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+      <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h3 className="font-bold text-sm sm:text-base">⭐ Đánh giá Học sinh</h3>
           <div className="flex items-center gap-2">
@@ -1027,7 +1049,7 @@ export default function Home() {
       <div className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50">
+            <tr className="bg-muted-background">
               <th className="text-left p-3 font-semibold text-gray-500">ID</th>
               <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
               <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
@@ -1038,7 +1060,7 @@ export default function Home() {
           </thead>
           <tbody>
             {evaluations.map((e, i) => (
-              <tr key={i} className="border-t hover:bg-gray-50">
+              <tr key={i} className="border-t hover:bg-muted-background">
                 <td className="p-3 text-gray-500">{e.evaluationId}</td>
                 <td className="p-3 font-medium">{e.studentName}</td>
                 <td className="p-3">{e.className}</td>
@@ -1060,8 +1082,8 @@ export default function Home() {
   );
 
   const renderBills = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+      <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
         <h3 className="font-bold"> Học phí</h3>
         <div className="flex gap-2 flex-wrap items-center">
           <div className="flex items-center gap-2">
@@ -1083,7 +1105,7 @@ export default function Home() {
       <div className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50">
+            <tr className="bg-muted-background">
               <th className="text-left p-3 font-semibold text-gray-500">ID</th>
               <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
               <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
@@ -1100,7 +1122,7 @@ export default function Home() {
             {bills.map((b, i) => {
               const debt = (b.amount || 0) - (b.paid || 0);
               return (
-                <tr key={i} className="border-t hover:bg-gray-50">
+                <tr key={i} className="border-t hover:bg-muted-background">
                   <td className="p-3 text-gray-500">{b.billId}</td>
                   <td className="p-3 font-medium">{b.studentName}</td>
                   <td className="p-3">{b.className}</td>
@@ -1127,8 +1149,8 @@ export default function Home() {
   );
 
   const renderUsers = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-5 border-b flex justify-between items-center">
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+      <div className="p-5 border-b flex justify-between items-center" style={{ borderBottomWidth: 'var(--border-w)' }}>
         <h3 className="font-bold">👤 Người dùng</h3>
         <button className={`${btnPrimary} flex items-center gap-1`} onClick={() => setUserModal({ open: true, editing: false, data: { ...emptyUser } })}>
           <Plus size={14} /> Thêm người dùng
@@ -1137,7 +1159,7 @@ export default function Home() {
       <div className="overflow-x-auto">
 <table className="w-full text-xs sm:text-sm min-w-[600px]">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted-background">
                   <th className="text-left p-3 font-semibold text-gray-500">ID</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Tên đăng nhập</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Họ tên</th>
@@ -1150,7 +1172,7 @@ export default function Home() {
               </thead>
               <tbody>
                 {usersList.map((u, i) => (
-                  <tr key={i} className="border-t hover:bg-gray-50">
+                  <tr key={i} className="border-t border-border hover:bg-muted-background">
                     <td className="p-3 text-gray-500">{u.userId}</td>
                     <td className="p-3">{u.username}</td>
                     <td className="p-3 font-medium">{u.fullName}</td>
@@ -1174,7 +1196,7 @@ export default function Home() {
   );
 
   const renderSettings = () => (
-    <div className="bg-white rounded-xl shadow-sm p-6 max-w-lg">
+    <div className="bg-card-white shadow-card border border-border p-6 max-w-lg" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
       <h3 className="font-bold text-lg mb-6">⚙️ Cài đặt Trung tâm</h3>
       <div className="space-y-4">
         <div className="mb-4">
@@ -1199,7 +1221,7 @@ export default function Home() {
   );
 
   const renderRevenue = () => {
-    if (!revenueData) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" /></div>;
+    if (!revenueData) return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
     const r = revenueData;
     const maxMonthAmount = Math.max(...r.byMonth.map(m => m.amount), 1);
     const statusColors: Record<string, string> = {
@@ -1219,7 +1241,7 @@ export default function Home() {
             { icon: '❌', label: 'Còn nợ', value: formatCurrency(r.stats.totalDebt), color: 'bg-red-100' },
             { icon: '📊', label: 'Tỷ lệ thu', value: `${r.stats.collectionRate}%`, color: 'bg-blue-100' },
           ].map((s, i) => (
-            <div key={i} className="bg-white rounded-xl p-3 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-sm">
+            <div key={i} className="bg-card-white shadow-card border border-border p-3 sm:p-5 flex items-center gap-2 sm:gap-4" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
               <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl ${s.color} flex items-center justify-center text-lg sm:text-2xl flex-shrink-0`}>{s.icon}</div>
               <div className="min-w-0">
                 <div className="text-sm sm:text-lg font-bold leading-tight break-all">{s.value}</div>
@@ -1231,7 +1253,7 @@ export default function Home() {
 
         {/* Revenue by month chart + status donut */}
         <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
-          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm md:col-span-2 overflow-x-auto">
+          <div className="bg-card-white shadow-card border border-border p-4 sm:p-6 md:col-span-2 overflow-x-auto" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
             <h3 className="font-bold mb-4 text-sm sm:text-base flex items-center gap-2"><TrendingUp size={18} /> Doanh thu theo tháng</h3>
             {r.byMonth.length === 0 ? (
               <p className="text-center text-gray-500 py-10">Chưa có dữ liệu</p>
@@ -1262,7 +1284,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+          <div className="bg-card-white shadow-card border border-border p-4 sm:p-6" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
             <h3 className="font-bold mb-4 text-sm sm:text-base">Trạng thái thanh toán</h3>
             {r.byStatus.length === 0 ? (
               <p className="text-center text-gray-500 py-10">Chưa có dữ liệu</p>
@@ -1301,8 +1323,8 @@ export default function Home() {
         </div>
 
         {/* Revenue by class table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b flex justify-between items-center">
+        <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+          <div className="p-5 border-b flex justify-between items-center" style={{ borderBottomWidth: 'var(--border-w)' }}>
             <h3 className="font-bold flex items-center gap-2"><DollarSign size={18} /> Doanh thu theo lớp</h3>
             <div className="flex gap-2">
               <button className={`${btnSecondary} flex items-center gap-1`} onClick={() => window.print()}><Printer size={14} /> In</button>
@@ -1311,7 +1333,7 @@ export default function Home() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[600px]">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted-background">
                   <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Số HĐ</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Buổi</th>
@@ -1325,7 +1347,7 @@ export default function Home() {
                 {r.byClass.map((c, i) => {
                   const rate = c.amount > 0 ? Math.round((c.paid / c.amount) * 100) : 0;
                   return (
-                    <tr key={i} className="border-t hover:bg-gray-50">
+                    <tr key={i} className="border-t border-border hover:bg-muted-background">
                       <td className="p-3 font-medium">{c.className}</td>
                       <td className="p-3 text-center">{c.count}</td>
                       <td className="p-3 text-center">{c.sessions}</td>
@@ -1363,15 +1385,15 @@ export default function Home() {
         </div>
 
         {/* Recent bills */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b flex justify-between items-center">
+        <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+          <div className="p-5 border-b flex justify-between items-center" style={{ borderBottomWidth: 'var(--border-w)' }}>
             <h3 className="font-bold">📋 Học phí gần đây</h3>
             <button className={`${btnSecondary} text-xs`} onClick={() => setCurrentPage('bills')}>Xem tất cả →</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[600px]">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted-background">
                   <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Tháng</th>
@@ -1382,7 +1404,7 @@ export default function Home() {
               </thead>
               <tbody>
                 {bills.slice(0, 8).map((b, i) => (
-                  <tr key={i} className="border-t hover:bg-gray-50">
+                  <tr key={i} className="border-t border-border hover:bg-muted-background">
                     <td className="p-3 font-medium">{b.studentName}</td>
                     <td className="p-3">{b.className}</td>
                     <td className="p-3">{b.month}</td>
@@ -1408,8 +1430,8 @@ export default function Home() {
     }, {} as Record<string, number>);
     return (
       <div className="space-y-4">
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+        <div className="bg-card-white shadow-card border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+          <div className="p-3 sm:p-5 border-b border-border flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <h3 className="font-bold text-sm sm:text-base flex items-center gap-2"><UserPlus size={18} /> Tuyển sinh - Học sinh chờ</h3>
               <button className={`${btnPrimary} flex items-center gap-1 text-xs sm:text-sm`} onClick={() => setProspectModal({ open: true, editing: false, data: { ...emptyProspect, contactDate: new Date().toISOString().split('T')[0] } })}>
@@ -1422,7 +1444,7 @@ export default function Home() {
                 <button
                   key={st}
                   onClick={() => setProspectTab(st)}
-                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${prospectTab === st ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${prospectTab === st ? 'bg-primary text-primary-foreground' : 'bg-muted-background text-muted-foreground hover:bg-secondary'}`}
                 >
                   {st} <span className="opacity-75">({counts[st] || 0})</span>
                 </button>
@@ -1432,7 +1454,7 @@ export default function Home() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[800px]">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted-background">
                   <th className="text-left p-3 font-semibold text-gray-500">Ngày liên hệ</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Tên Zalo PH</th>
                   <th className="text-left p-3 font-semibold text-gray-500">SĐT</th>
@@ -1448,7 +1470,7 @@ export default function Home() {
               </thead>
               <tbody>
                 {filtered.map((p, i) => (
-                  <tr key={i} className="border-t hover:bg-gray-50">
+                  <tr key={i} className="border-t border-border hover:bg-muted-background">
                     <td className="p-3 whitespace-nowrap">{formatDate(p.contactDate)}</td>
                     <td className="p-3 font-medium">{p.parentZalo || '-'}</td>
                     <td className="p-3 whitespace-nowrap">{p.phone || '-'}</td>
@@ -1495,44 +1517,44 @@ export default function Home() {
       <Modal title={prospectModal.editing ? 'Sửa hồ sơ tuyển sinh' : 'Thêm HS chờ'} onClose={() => setProspectModal(prev => ({ ...prev, open: false, editing: false, data: { ...emptyProspect } }))}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Ngày liên hệ (lần đầu) *">
-            <input type="date" className={inputClass} value={d.contactDate} onChange={e => setD({ contactDate: e.target.value })} />
+            <input type="date" className={filledInput} value={d.contactDate} onChange={e => setD({ contactDate: e.target.value })} />
           </FormField>
           <FormField label="Tên Zalo PH">
-            <input className={inputClass} value={d.parentZalo} onChange={e => setD({ parentZalo: e.target.value })} placeholder="Tên Zalo phụ huynh" />
+            <input className={filledInput} value={d.parentZalo} onChange={e => setD({ parentZalo: e.target.value })} placeholder="Tên Zalo phụ huynh" />
           </FormField>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="SĐT (nếu có)">
-            <input className={inputClass} value={d.phone} onChange={e => setD({ phone: e.target.value })} placeholder="Số điện thoại" />
+            <input className={filledInput} value={d.phone} onChange={e => setD({ phone: e.target.value })} placeholder="Số điện thoại" />
           </FormField>
           <FormField label="Tên học sinh *">
-            <input className={inputClass} value={d.studentName} onChange={e => setD({ studentName: e.target.value })} placeholder="Tên học sinh" />
+            <input className={outlinedInput} value={d.studentName} onChange={e => setD({ studentName: e.target.value })} placeholder="Tên học sinh" />
           </FormField>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Giới tính">
-            <select className={selectClass} value={d.gender} onChange={e => setD({ gender: e.target.value })}>
+            <select className={filledSelect} value={d.gender} onChange={e => setD({ gender: e.target.value })}>
               <option value="Nam">Nam</option>
               <option value="Nữ">Nữ</option>
             </select>
           </FormField>
           <FormField label="Khối/Lớp/Tuổi">
-            <input className={inputClass} value={d.gradeAge} onChange={e => setD({ gradeAge: e.target.value })} placeholder="VD: Lớp 6 / 11 tuổi" />
+            <input className={filledInput} value={d.gradeAge} onChange={e => setD({ gradeAge: e.target.value })} placeholder="VD: Lớp 6 / 11 tuổi" />
           </FormField>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Giờ học mong muốn">
-            <input className={inputClass} value={d.desiredTime} onChange={e => setD({ desiredTime: e.target.value })} placeholder="VD: T2-T4-T6 18:00-19:30" />
+            <input className={filledInput} value={d.desiredTime} onChange={e => setD({ desiredTime: e.target.value })} placeholder="VD: T2-T4-T6 18:00-19:30" />
           </FormField>
           <FormField label="Test đầu vào">
-            <select className={selectClass} value={d.testStatus} onChange={e => setD({ testStatus: e.target.value })}>
+            <select className={filledSelect} value={d.testStatus} onChange={e => setD({ testStatus: e.target.value })}>
               {TEST_STATUS_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </FormField>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Lớp ghép khả thi">
-            <select className={selectClass} value={d.suggestedClass} onChange={e => setD({ suggestedClass: e.target.value })}>
+            <select className={filledSelect} value={d.suggestedClass} onChange={e => setD({ suggestedClass: e.target.value })}>
               <option value="">-- Chưa xác định --</option>
               {classes.map(c => <option key={c.classId} value={c.name}>{c.name}</option>)}
             </select>
@@ -1540,13 +1562,13 @@ export default function Home() {
         </div>
         {prospectModal.editing && (
           <FormField label="Trạng thái">
-            <select className={selectClass} value={d.status} onChange={e => setD({ status: e.target.value })}>
+            <select className={filledSelect} value={d.status} onChange={e => setD({ status: e.target.value })}>
               {PROSPECT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </FormField>
         )}
         <FormField label="Ghi chú">
-          <textarea className={inputClass} value={d.note} onChange={e => setD({ note: e.target.value })} rows={3} placeholder="Ghi chú thêm (nguồn, nhu cầu, đặc điểm...)" />
+          <textarea className={filledInput} value={d.note} onChange={e => setD({ note: e.target.value })} rows={3} placeholder="Ghi chú thêm (nguồn, nhu cầu, đặc điểm...)" />
         </FormField>
         <div className="flex justify-end gap-2 mt-4">
           <button className={btnSecondary} onClick={() => setProspectModal({ open: false, editing: false, data: { ...emptyProspect } })}>Huỷ</button>
@@ -1583,31 +1605,31 @@ export default function Home() {
     return (
       <Modal title={studentModal.editing ? 'Sửa Học sinh' : 'Thêm Học sinh'} onClose={() => setStudentModal(prev => ({ ...prev, open: false }))}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FormField label="Họ tên *"><input className={inputClass} value={d.name} onChange={e => setD({ name: e.target.value })} placeholder="Nhập họ tên" /></FormField>
-          <FormField label="Ngày sinh"><input type="date" className={inputClass} value={d.birthDate} onChange={e => setD({ birthDate: e.target.value })} /></FormField>
+          <FormField label="Họ tên *"><input className={outlinedInput} value={d.name} onChange={e => setD({ name: e.target.value })} placeholder="Nhập họ tên" /></FormField>
+          <FormField label="Ngày sinh"><input type="date" className={filledInput} value={d.birthDate} onChange={e => setD({ birthDate: e.target.value })} /></FormField>
           <FormField label="Giới tính">
-            <select className={selectClass} value={d.gender} onChange={e => setD({ gender: e.target.value })}>
+            <select className={filledSelect} value={d.gender} onChange={e => setD({ gender: e.target.value })}>
               <option value="Nam">Nam</option><option value="Nữ">Nữ</option>
             </select>
           </FormField>
-          <FormField label="Tên Zalo PH"><input className={inputClass} value={d.parentZalo} onChange={e => setD({ parentZalo: e.target.value })} placeholder="Tên Zalo phụ huynh" /></FormField>
-          <FormField label="SĐT (nếu có)"><input className={inputClass} value={d.phone} onChange={e => setD({ phone: e.target.value })} placeholder="09xxxxxxxx" /></FormField>
+          <FormField label="Tên Zalo PH"><input className={filledInput} value={d.parentZalo} onChange={e => setD({ parentZalo: e.target.value })} placeholder="Tên Zalo phụ huynh" /></FormField>
+          <FormField label="SĐT (nếu có)"><input className={filledInput} value={d.phone} onChange={e => setD({ phone: e.target.value })} placeholder="09xxxxxxxx" /></FormField>
         </div>
-        <FormField label="Địa chỉ"><input className={inputClass} value={d.address} onChange={e => setD({ address: e.target.value })} placeholder="Nhập địa chỉ" /></FormField>
+        <FormField label="Địa chỉ"><input className={filledInput} value={d.address} onChange={e => setD({ address: e.target.value })} placeholder="Nhập địa chỉ" /></FormField>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Lớp *">
-            <select className={selectClass} value={d.className} onChange={e => setD({ className: e.target.value })}>
+            <select className={filledSelect} value={d.className} onChange={e => setD({ className: e.target.value })}>
               <option value="">-- Chọn lớp --</option>
               {classes.map(c => <option key={c.classId} value={c.name}>{c.name}</option>)}
             </select>
           </FormField>
           <FormField label="Trạng thái">
-            <select className={selectClass} value={d.status} onChange={e => setD({ status: e.target.value })}>
+            <select className={filledSelect} value={d.status} onChange={e => setD({ status: e.target.value })}>
               <option value="Đang học">Đang học</option><option value="Nghỉ học">Nghỉ học</option><option value="Bảo lưu">Bảo lưu</option>
             </select>
           </FormField>
         </div>
-        <FormField label="Ghi chú"><textarea className={inputClass} value={d.note} onChange={e => setD({ note: e.target.value })} rows={2} placeholder="Ghi chú..." /></FormField>
+        <FormField label="Ghi chú"><textarea className={filledInput} value={d.note} onChange={e => setD({ note: e.target.value })} rows={2} placeholder="Ghi chú..." /></FormField>
         <div className="flex justify-end gap-2 mt-4">
           <button className={btnSecondary} onClick={() => setStudentModal(prev => ({ ...prev, open: false }))}>Huỷ</button>
           <button className={btnPrimary} onClick={saveStudent}>💾 Lưu</button>
@@ -1622,18 +1644,18 @@ export default function Home() {
     const setD = (updates: Partial<ClassForm>) => setClassModal(prev => ({ ...prev, data: { ...prev.data, ...updates } }));
     return (
       <Modal title={classModal.editing ? 'Sửa Lớp' : 'Thêm Lớp'} onClose={() => setClassModal(prev => ({ ...prev, open: false }))}>
-        <FormField label="Tên lớp *"><input className={inputClass} value={d.name} onChange={e => setD({ name: e.target.value })} placeholder="VD: English A1" /></FormField>
+        <FormField label="Tên lớp *"><input className={outlinedInput} value={d.name} onChange={e => setD({ name: e.target.value })} placeholder="VD: English A1" /></FormField>
         <FormField label="Trình độ">
-          <select className={selectClass} value={d.level} onChange={e => setD({ level: e.target.value })}>
+          <select className={filledSelect} value={d.level} onChange={e => setD({ level: e.target.value })}>
             {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
         </FormField>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FormField label="Giáo viên"><input className={inputClass} value={d.teacher} onChange={e => setD({ teacher: e.target.value })} placeholder="Tên giáo viên" /></FormField>
-          <FormField label="Sĩ số tối đa"><input type="number" className={inputClass} value={d.maxStudents} onChange={e => setD({ maxStudents: parseInt(e.target.value) || 25 })} /></FormField>
+          <FormField label="Giáo viên"><input className={outlinedInput} value={d.teacher} onChange={e => setD({ teacher: e.target.value })} placeholder="Tên giáo viên" /></FormField>
+          <FormField label="Sĩ số tối đa"><input type="number" className={filledInput} value={d.maxStudents} onChange={e => setD({ maxStudents: parseInt(e.target.value) || 25 })} /></FormField>
         </div>
-        <FormField label="Học phí/buổi (VNĐ)"><input type="number" className={inputClass} value={d.feePerSession} onChange={e => setD({ feePerSession: parseInt(e.target.value) || 150000 })} /></FormField>
-        <FormField label="Ghi chú"><textarea className={inputClass} value={d.note} onChange={e => setD({ note: e.target.value })} rows={2} /></FormField>
+        <FormField label="Học phí/buổi (VNĐ)"><input type="number" className={filledInput} value={d.feePerSession} onChange={e => setD({ feePerSession: parseInt(e.target.value) || 150000 })} /></FormField>
+        <FormField label="Ghi chú"><textarea className={filledInput} value={d.note} onChange={e => setD({ note: e.target.value })} rows={2} /></FormField>
         <div className="flex justify-end gap-2 mt-4">
           <button className={btnSecondary} onClick={() => setClassModal({ ...classModal, open: false })}>Huỷ</button>
           <button className={btnPrimary} onClick={saveClassItem}> Lưu</button>
@@ -1860,31 +1882,32 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-background">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full bg-slate-800 text-white z-50 transition-transform duration-300 w-64 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-        <div className="p-4 border-b border-slate-700 flex items-center justify-between lg:justify-start">
-          <h2 className="text-base font-bold">📚 MsMyenEnglish</h2>
-          <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-slate-700 rounded lg:hidden">
+      <aside className={`fixed top-0 left-0 h-full bg-sidebar text-sidebar-foreground border-r border-sidebar-border z-50 transition-transform duration-300 w-64 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 flex flex-col`} style={{ borderRightWidth: 'var(--border-w)', boxShadow: 'var(--shadow-card)' }}>
+        <div className="p-4 border-b border-sidebar-border flex items-center justify-between lg:justify-start overflow-hidden" style={{ borderBottomWidth: 'var(--border-w)' }}>
+          <img src="/logo ngang.png" alt="Ms. Myên English" className="w-full max-w-[190px] h-auto flex-shrink-0" style={{ aspectRatio: '3/2' }} />
+          <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-muted-background rounded lg:hidden flex-shrink-0">
             <X size={20} />
           </button>
         </div>
-        <nav className="py-2 overflow-y-auto h-[calc(100%-60px)]">
+        <nav className="py-2 overflow-y-auto flex-1 min-h-0">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
               <div key={item.id}>
                 {navItems.indexOf(item) === 0 || navItems[navItems.indexOf(item) - 1]?.section !== item.section ? (
-                  <div className="px-4 pt-3 pb-1 text-[10px] uppercase text-slate-400 tracking-wider">{item.section}</div>
+                  <div className="px-4 pt-3 pb-1 text-[10px] uppercase text-muted-foreground tracking-wider">{item.section}</div>
                 ) : null}
                 <button
                   onClick={() => { setCurrentPage(item.id); setSidebarOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${currentPage === item.id ? 'bg-amber-500 text-white font-semibold' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}`}>
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${currentPage === item.id ? 'bg-primary text-primary-foreground font-semibold' : 'text-muted-foreground hover:bg-muted-background hover:text-foreground'}`}
+                  style={{ borderRadius: currentPage === item.id ? 'var(--radius-pill)' : undefined }}>
                   <Icon size={18} />
                   {item.label}
                 </button>
@@ -1896,27 +1919,27 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="lg:ml-64 min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="bg-white border-b px-3 sm:px-4 lg:px-5 py-2.5 flex justify-between items-center sticky top-0 z-30 gap-2">
+      {/* Header */}
+        <header className="bg-sidebar border-b border-sidebar-border px-3 sm:px-4 lg:px-5 py-2.5 flex justify-between items-center sticky top-0 z-30 gap-2" style={{ borderBottomWidth: 'var(--border-w)' }}>
           <div className="flex items-center gap-2 min-w-0">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg lg:hidden flex-shrink-0">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-muted-background rounded-lg lg:hidden flex-shrink-0">
               <Menu size={20} />
             </button>
             <h1 className="text-base sm:text-xl font-bold truncate">{pageTitles[currentPage]}</h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className="px-1.5 py-1.5 sm:px-2 border-2 border-gray-200 rounded-lg text-xs bg-white w-[80px] sm:max-w-[120px] lg:max-w-[180px] sm:w-auto">
+            <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className="px-1.5 py-1.5 sm:px-2 border border-input text-xs bg-card w-[80px] sm:max-w-[120px] lg:max-w-[180px] sm:w-auto focus:border-ring" style={{ borderRadius: 'var(--radius-input)', outline: 'none' }}>
               <option value="">Tất cả</option>
               {classes.map(c => <option key={c.classId} value={c.name}>{c.name.length > 20 ? c.name.substring(0, 20) + '...' : c.name}</option>)}
             </select>
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-amber-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm flex-shrink-0 ring-2 ring-primary ring-offset-2 ring-offset-background" style={{ borderRadius: 'var(--radius-pill)' }}>
               {user?.name?.charAt(0) || 'A'}
             </div>
             <div className="hidden md:block flex-shrink-0">
               <div className="text-sm font-semibold leading-tight">{user?.name}</div>
               <div className="text-xs text-gray-500">{user?.role}</div>
             </div>
-            <button onClick={handleLogout} className="px-2.5 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1 flex-shrink-0">
+            <button onClick={handleLogout} className="px-2.5 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm font-semibold flex items-center gap-1 flex-shrink-0 transition-colors" style={{ borderRadius: 'var(--radius-pill)', boxShadow: 'var(--shadow-btn)' }}>
               <LogOut size={14} className="sm:hidden" />
               <span className="hidden sm:inline">Thoát</span>
             </button>
@@ -1943,7 +1966,7 @@ export default function Home() {
       {/* Loading Overlay */}
       {loading && (
         <div className="fixed inset-0 bg-white/80 flex items-center justify-center z-50">
-          <div className="animate-spin w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full" />
+          <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full" />
         </div>
       )}
 
