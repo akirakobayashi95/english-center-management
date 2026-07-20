@@ -59,6 +59,8 @@ local-*
 
 # Screenshots / artifacts chỉ dùng cho Z.ai preview
 *.png
+!public/logo.png
+!public/logo\ ngang.png
 *.jpg
 *.jpeg
 *.gif
