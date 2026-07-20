@@ -819,8 +819,8 @@ export default function Home() {
   );
 
   const renderClasses = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-3 sm:p-5 border-b flex justify-between items-center gap-2">
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+      <div className="p-3 sm:p-5 border-b flex justify-between items-center gap-2" style={{ borderBottomWidth: 'var(--border-w)' }}>
         <h3 className="font-bold text-sm sm:text-base"> Danh sách Lớp học</h3>
         <button className={`${btnPrimary} flex items-center gap-1 text-xs sm:text-sm`} onClick={() => setClassModal({ open: true, editing: false, data: { ...emptyClass } })}>
           <Plus size={14} /> <span className="hidden sm:inline">Thêm lớp</span>
@@ -829,7 +829,7 @@ export default function Home() {
       <div className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50">
+            <tr className="bg-muted-background">
               <th className="text-left p-3 font-semibold text-gray-500">ID</th>
               <th className="text-left p-3 font-semibold text-gray-500">Tên lớp</th>
               <th className="text-left p-3 font-semibold text-gray-500">Trình độ</th>
@@ -844,7 +844,7 @@ export default function Home() {
             {classes.map((c, i) => {
               const count = students.filter(s => s.className === c.name).length;
               return (
-                <tr key={i} className="border-t hover:bg-gray-50">
+                <tr key={i} className="border-t hover:bg-muted-background">
                   <td className="p-3 text-gray-500">{c.classId}</td>
                   <td className="p-3 font-medium">{c.name}</td>
                   <td className="p-3"><LevelBadge level={c.level} /></td>
@@ -880,8 +880,8 @@ export default function Home() {
       return 'bg-gray-100 text-gray-600';
     };
     return (
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+      <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+        <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
           <div className="flex items-center gap-3">
             <button onClick={() => setScheduleMonth(new Date(scheduleMonth.getFullYear(), scheduleMonth.getMonth() - 1))} className="p-2 hover:bg-gray-100 rounded-lg"><ChevronLeft size={18} /></button>
             <h3 className="font-bold">{format(scheduleMonth, 'MMMM yyyy')}</h3>
@@ -899,8 +899,8 @@ export default function Home() {
         </div>
         <div className="p-2 sm:p-4">
           <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
-            {dayNames.map(d => <div key={d} className="text-center py-1 sm:py-2 text-[10px] sm:text-sm font-semibold text-gray-500 bg-gray-50 rounded">{d}</div>)}
-            {Array.from({ length: startDay }).map((_, i) => <div key={`e-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-gray-50 rounded" />)}
+            {dayNames.map(d => <div key={d} className="text-center py-1 sm:py-2 text-[10px] sm:text-sm font-semibold text-gray-500 bg-muted-background rounded">{d}</div>)}
+            {Array.from({ length: startDay }).map((_, i) => <div key={`e-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-muted-background rounded" />)}
             {days.map((day, i) => {
               const dateStr = format(day, 'yyyy-MM-dd');
               const daySchedules = schedules.filter(s => s.date === dateStr);
@@ -930,8 +930,8 @@ export default function Home() {
     const filteredStudents = selectedClass ? students.filter(s => s.className === selectedClass) : students;
 
     return (
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+      <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+        <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-sm sm:text-base"> Bảng điểm danh</h3>
@@ -960,8 +960,8 @@ export default function Home() {
         <div className="overflow-x-auto -mx-3 sm:mx-0">
           <table className="w-full text-xs sm:text-sm min-w-[600px] sm:min-w-[800px]">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="text-left p-2 font-semibold text-gray-500 sticky left-0 bg-gray-50 z-10 min-w-[160px]">Học sinh</th>
+              <tr className="bg-muted-background">
+                <th className="text-left p-2 font-semibold text-gray-500 sticky left-0 bg-muted-background z-10 min-w-[160px]">Học sinh</th>
                 {days.map(day => {
                   const dateStr = format(day, 'yyyy-MM-dd');
                   const dayOfWeek = getDayOfWeek(dateStr);
@@ -980,8 +980,8 @@ export default function Home() {
                 const studentAtt = attendance.filter(a => a.studentId === s.studentId);
                 const presentCount = studentAtt.filter(a => a.status === 'Có mặt').length;
                 return (
-                  <tr key={s.studentId} className="border-t hover:bg-gray-50">
-                    <td className="p-2 font-medium sticky left-0 bg-white z-10">{s.name}</td>
+                  <tr key={s.studentId} className="border-t hover:bg-muted-background">
+                    <td className="p-2 font-medium sticky left-0 bg-card-white z-10">{s.name}</td>
                     {days.map(day => {
                       const dateStr = format(day, 'yyyy-MM-dd');
                       const record = attendance.find(a => a.studentId === s.studentId && a.date === dateStr);
@@ -1002,7 +1002,7 @@ export default function Home() {
                       return (
                         <td key={dateStr} className="p-1 text-center">
                           <div
-                            className="w-8 h-8 rounded-lg bg-gray-100 mx-auto cursor-pointer hover:bg-gray-200 transition-colors"
+                            className="w-8 h-8 rounded-lg bg-muted-background mx-auto cursor-pointer hover:bg-secondary transition-colors"
                             onClick={() => setAttCellModal({ open: true, date: dateStr, studentId: s.studentId, status: '', note: '' })}
                           />
                         </td>
@@ -1015,7 +1015,7 @@ export default function Home() {
             </tbody>
           </table>
         </div>
-        <div className="flex gap-4 p-3 bg-gray-50 border-t text-sm">
+        <div className="flex gap-4 p-3 bg-muted-background border-t border-border text-sm">
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500" /> Có mặt</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500" /> Vắng</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-500" /> Có phép</span>
@@ -1026,8 +1026,8 @@ export default function Home() {
   };
 
   const renderEvaluations = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+      <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h3 className="font-bold text-sm sm:text-base">⭐ Đánh giá Học sinh</h3>
           <div className="flex items-center gap-2">
@@ -1049,7 +1049,7 @@ export default function Home() {
       <div className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50">
+            <tr className="bg-muted-background">
               <th className="text-left p-3 font-semibold text-gray-500">ID</th>
               <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
               <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
@@ -1060,7 +1060,7 @@ export default function Home() {
           </thead>
           <tbody>
             {evaluations.map((e, i) => (
-              <tr key={i} className="border-t hover:bg-gray-50">
+              <tr key={i} className="border-t hover:bg-muted-background">
                 <td className="p-3 text-gray-500">{e.evaluationId}</td>
                 <td className="p-3 font-medium">{e.studentName}</td>
                 <td className="p-3">{e.className}</td>
@@ -1082,8 +1082,8 @@ export default function Home() {
   );
 
   const renderBills = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+      <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
         <h3 className="font-bold"> Học phí</h3>
         <div className="flex gap-2 flex-wrap items-center">
           <div className="flex items-center gap-2">
@@ -1105,7 +1105,7 @@ export default function Home() {
       <div className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50">
+            <tr className="bg-muted-background">
               <th className="text-left p-3 font-semibold text-gray-500">ID</th>
               <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
               <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
@@ -1122,7 +1122,7 @@ export default function Home() {
             {bills.map((b, i) => {
               const debt = (b.amount || 0) - (b.paid || 0);
               return (
-                <tr key={i} className="border-t hover:bg-gray-50">
+                <tr key={i} className="border-t hover:bg-muted-background">
                   <td className="p-3 text-gray-500">{b.billId}</td>
                   <td className="p-3 font-medium">{b.studentName}</td>
                   <td className="p-3">{b.className}</td>
@@ -1149,8 +1149,8 @@ export default function Home() {
   );
 
   const renderUsers = () => (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-5 border-b flex justify-between items-center">
+    <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+      <div className="p-5 border-b flex justify-between items-center" style={{ borderBottomWidth: 'var(--border-w)' }}>
         <h3 className="font-bold">👤 Người dùng</h3>
         <button className={`${btnPrimary} flex items-center gap-1`} onClick={() => setUserModal({ open: true, editing: false, data: { ...emptyUser } })}>
           <Plus size={14} /> Thêm người dùng
@@ -1159,7 +1159,7 @@ export default function Home() {
       <div className="overflow-x-auto">
 <table className="w-full text-xs sm:text-sm min-w-[600px]">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted-background">
                   <th className="text-left p-3 font-semibold text-gray-500">ID</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Tên đăng nhập</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Họ tên</th>
@@ -1172,7 +1172,7 @@ export default function Home() {
               </thead>
               <tbody>
                 {usersList.map((u, i) => (
-                  <tr key={i} className="border-t hover:bg-gray-50">
+                  <tr key={i} className="border-t border-border hover:bg-muted-background">
                     <td className="p-3 text-gray-500">{u.userId}</td>
                     <td className="p-3">{u.username}</td>
                     <td className="p-3 font-medium">{u.fullName}</td>
@@ -1196,7 +1196,7 @@ export default function Home() {
   );
 
   const renderSettings = () => (
-    <div className="bg-white rounded-xl shadow-sm p-6 max-w-lg">
+    <div className="bg-card-white shadow-card border border-border p-6 max-w-lg" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
       <h3 className="font-bold text-lg mb-6">⚙️ Cài đặt Trung tâm</h3>
       <div className="space-y-4">
         <div className="mb-4">
@@ -1241,7 +1241,7 @@ export default function Home() {
             { icon: '❌', label: 'Còn nợ', value: formatCurrency(r.stats.totalDebt), color: 'bg-red-100' },
             { icon: '📊', label: 'Tỷ lệ thu', value: `${r.stats.collectionRate}%`, color: 'bg-blue-100' },
           ].map((s, i) => (
-            <div key={i} className="bg-white rounded-xl p-3 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-sm">
+            <div key={i} className="bg-card-white shadow-card border border-border p-3 sm:p-5 flex items-center gap-2 sm:gap-4" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
               <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl ${s.color} flex items-center justify-center text-lg sm:text-2xl flex-shrink-0`}>{s.icon}</div>
               <div className="min-w-0">
                 <div className="text-sm sm:text-lg font-bold leading-tight break-all">{s.value}</div>
@@ -1253,7 +1253,7 @@ export default function Home() {
 
         {/* Revenue by month chart + status donut */}
         <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
-          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm md:col-span-2 overflow-x-auto">
+          <div className="bg-card-white shadow-card border border-border p-4 sm:p-6 md:col-span-2 overflow-x-auto" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
             <h3 className="font-bold mb-4 text-sm sm:text-base flex items-center gap-2"><TrendingUp size={18} /> Doanh thu theo tháng</h3>
             {r.byMonth.length === 0 ? (
               <p className="text-center text-gray-500 py-10">Chưa có dữ liệu</p>
@@ -1284,7 +1284,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+          <div className="bg-card-white shadow-card border border-border p-4 sm:p-6" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
             <h3 className="font-bold mb-4 text-sm sm:text-base">Trạng thái thanh toán</h3>
             {r.byStatus.length === 0 ? (
               <p className="text-center text-gray-500 py-10">Chưa có dữ liệu</p>
@@ -1323,8 +1323,8 @@ export default function Home() {
         </div>
 
         {/* Revenue by class table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b flex justify-between items-center">
+        <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+          <div className="p-5 border-b flex justify-between items-center" style={{ borderBottomWidth: 'var(--border-w)' }}>
             <h3 className="font-bold flex items-center gap-2"><DollarSign size={18} /> Doanh thu theo lớp</h3>
             <div className="flex gap-2">
               <button className={`${btnSecondary} flex items-center gap-1`} onClick={() => window.print()}><Printer size={14} /> In</button>
@@ -1333,7 +1333,7 @@ export default function Home() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[600px]">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted-background">
                   <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Số HĐ</th>
                   <th className="text-center p-3 font-semibold text-gray-500">Buổi</th>
@@ -1347,7 +1347,7 @@ export default function Home() {
                 {r.byClass.map((c, i) => {
                   const rate = c.amount > 0 ? Math.round((c.paid / c.amount) * 100) : 0;
                   return (
-                    <tr key={i} className="border-t hover:bg-gray-50">
+                    <tr key={i} className="border-t border-border hover:bg-muted-background">
                       <td className="p-3 font-medium">{c.className}</td>
                       <td className="p-3 text-center">{c.count}</td>
                       <td className="p-3 text-center">{c.sessions}</td>
@@ -1385,15 +1385,15 @@ export default function Home() {
         </div>
 
         {/* Recent bills */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b flex justify-between items-center">
+        <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+          <div className="p-5 border-b flex justify-between items-center" style={{ borderBottomWidth: 'var(--border-w)' }}>
             <h3 className="font-bold">📋 Học phí gần đây</h3>
             <button className={`${btnSecondary} text-xs`} onClick={() => setCurrentPage('bills')}>Xem tất cả →</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[600px]">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted-background">
                   <th className="text-left p-3 font-semibold text-gray-500">Học sinh</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Lớp</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Tháng</th>
@@ -1404,7 +1404,7 @@ export default function Home() {
               </thead>
               <tbody>
                 {bills.slice(0, 8).map((b, i) => (
-                  <tr key={i} className="border-t hover:bg-gray-50">
+                  <tr key={i} className="border-t border-border hover:bg-muted-background">
                     <td className="p-3 font-medium">{b.studentName}</td>
                     <td className="p-3">{b.className}</td>
                     <td className="p-3">{b.month}</td>
@@ -1430,8 +1430,8 @@ export default function Home() {
     }, {} as Record<string, number>);
     return (
       <div className="space-y-4">
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-3 sm:p-5 border-b flex flex-col gap-3">
+        <div className="bg-card-white shadow-card border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
+          <div className="p-3 sm:p-5 border-b border-border flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <h3 className="font-bold text-sm sm:text-base flex items-center gap-2"><UserPlus size={18} /> Tuyển sinh - Học sinh chờ</h3>
               <button className={`${btnPrimary} flex items-center gap-1 text-xs sm:text-sm`} onClick={() => setProspectModal({ open: true, editing: false, data: { ...emptyProspect, contactDate: new Date().toISOString().split('T')[0] } })}>
@@ -1444,7 +1444,7 @@ export default function Home() {
                 <button
                   key={st}
                   onClick={() => setProspectTab(st)}
-                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${prospectTab === st ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${prospectTab === st ? 'bg-primary text-primary-foreground' : 'bg-muted-background text-muted-foreground hover:bg-secondary'}`}
                 >
                   {st} <span className="opacity-75">({counts[st] || 0})</span>
                 </button>
@@ -1454,7 +1454,7 @@ export default function Home() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm min-w-[800px]">
               <thead>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted-background">
                   <th className="text-left p-3 font-semibold text-gray-500">Ngày liên hệ</th>
                   <th className="text-left p-3 font-semibold text-gray-500">Tên Zalo PH</th>
                   <th className="text-left p-3 font-semibold text-gray-500">SĐT</th>
@@ -1470,7 +1470,7 @@ export default function Home() {
               </thead>
               <tbody>
                 {filtered.map((p, i) => (
-                  <tr key={i} className="border-t hover:bg-gray-50">
+                  <tr key={i} className="border-t border-border hover:bg-muted-background">
                     <td className="p-3 whitespace-nowrap">{formatDate(p.contactDate)}</td>
                     <td className="p-3 font-medium">{p.parentZalo || '-'}</td>
                     <td className="p-3 whitespace-nowrap">{p.phone || '-'}</td>

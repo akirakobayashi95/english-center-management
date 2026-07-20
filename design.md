@@ -99,3 +99,17 @@ radius/spacing/shadow/motion tokens into Tailwind theme + a global CSS layer tha
 `@import`s / copies `colors_and_type.css` token block, then apply only to **decorative /
 chrome** elements (Step 2 inventory drives this). Semantic status colors are mapped 1:1
 and never reassigned to decoration.
+
+## 6. PROTECTED — non-status functional markers (same tier as STATUS_COLORS)
+
+These carry FUNCTIONAL MEANING but are NOT semantic status colors. They must
+never be recolored for decorative purposes and must not be "unified" to
+`bg-muted-background` / `bg-card-white` in later restyle passes.
+
+| Marker | Class | Hex | Where | Rule |
+| --- | --- | --- | --- | --- |
+| Today (calendar) | `bg-amber-50 border-amber-300` | `amber-50 #fffbeb` / `amber-300 #fcd34d` | Schedule page day cell for current date | Date indicator, not a status. Leave untouched. |
+
+If a future page adds similar date/context highlighting, add it here and keep
+it amber-family (distinct from brand gold `--gold #ffc928`) so it reads as a
+neutral "you are here" cue, not a brand or status signal.
