@@ -12,7 +12,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, parseISO 
 import * as XLSX from 'xlsx';
 
 // Types
-type Student = { id: number; studentId: string; name: string; birthDate: string | null; gender: string; phone: string; parentZalo: string; address: string; className: string; registerDate: string; note: string; status: string };
+type Student = { id: number; studentId: string; name: string; birthDate: string | null; gender: string; englishName: string; phone: string; parentZalo: string; address: string; className: string; registerDate: string; note: string; status: string };
 type ClassItem = { id: number; classId: string; name: string; level: string; teacher: string; maxStudents: number; feePerSession: number; note: string };
 type ScheduleItem = { id: number; scheduleId: string; className: string; date: string; dayOfWeek: string; startTime: string; endTime: string; room: string; teacher: string; status: string };
 type AttendanceItem = { id: number; attendanceId: string; studentId: string; className: string; date: string; dayOfWeek: string; status: string; note: string };
@@ -113,8 +113,8 @@ const getDayOfWeek = (dateStr: string) => {
   return days[parseISO(dateStr).getDay()];
 };
 
-type StudentForm = { studentId?: string; name: string; birthDate: string; gender: string; phone: string; parentZalo: string; address: string; className: string; note: string; status: string };
-const emptyStudent: StudentForm = { name: '', birthDate: '', gender: 'Nam', phone: '', parentZalo: '', address: '', className: '', note: '', status: 'Đang học' };
+type StudentForm = { studentId?: string; name: string; birthDate: string; gender: string; englishName: string; phone: string; parentZalo: string; address: string; className: string; note: string; status: string };
+const emptyStudent: StudentForm = { name: '', birthDate: '', gender: 'Nam', englishName: '', phone: '', parentZalo: '', address: '', className: '', note: '', status: 'Đang học' };
 
 type ClassForm = { classId?: string; name: string; level: string; teacher: string; maxStudents: number; feePerSession: number; note: string };
 const emptyClass: ClassForm = { name: '', level: 'Beginner', teacher: '', maxStudents: 25, feePerSession: 150000, note: '' };
@@ -136,17 +136,24 @@ const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: ''
 
 // Modal components — define ở module scope (KHÔNG bên trong Home) để giữ identity ổn định.
 // Nếu để trong Home(), mỗi keystroke tạo ra reference mới → React remount input → mất focus.
-const Modal = ({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-    <div className="bg-card-white w-full max-w-lg mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto shadow-card" style={{ borderRadius: 'var(--radius)', border: 'var(--border-w) solid var(--border)' }} onClick={e => e.stopPropagation()}>
-      <div className="flex justify-between items-center p-5 border-b border-border" style={{ borderBottomWidth: 'var(--border-w)' }}>
-        <h3 className="text-lg font-bold text-foreground">{title}</h3>
-        <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted-background hover:bg-secondary flex items-center justify-center"><X size={16} /></button>
+const Modal = ({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) => {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-card-white w-full max-w-lg mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto shadow-card" style={{ borderRadius: 'var(--radius)', border: 'var(--border-w) solid var(--border)' }} onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-5 border-b border-border" style={{ borderBottomWidth: 'var(--border-w)' }}>
+          <h3 className="text-lg font-bold text-foreground">{title}</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted-background hover:bg-secondary flex items-center justify-center"><X size={16} /></button>
+        </div>
+        <div className="p-5">{children}</div>
       </div>
-      <div className="p-5">{children}</div>
     </div>
-  </div>
-);
+  );
+};
 const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="mb-4">
     <label className="block text-sm font-bold mb-1 text-muted-foreground">{label}</label>
@@ -314,7 +321,7 @@ export default function Home() {
     const d = studentModal.data;
     if (!d.name || !d.className) { showToast('Vui lòng nhập họ tên và chọn lớp!', 'error'); return; }
     setLoading(true);
-    const res = await api('/students', { method: 'POST', body: JSON.stringify({ studentId: d.studentId || null, name: d.name, birthDate: d.birthDate, gender: d.gender, phone: d.phone, parentZalo: d.parentZalo, address: d.address, className: d.className, note: d.note, status: d.status }) });
+    const res = await api('/students', { method: 'POST', body: JSON.stringify({ studentId: d.studentId || null, name: d.name, birthDate: d.birthDate, gender: d.gender, englishName: d.englishName, phone: d.phone, parentZalo: d.parentZalo, address: d.address, className: d.className, note: d.note, status: d.status }) });
     setLoading(false);
     if (res.success) { showToast(res.message); setStudentModal({ ...studentModal, open: false }); loadData('students'); }
     else showToast(res.message, 'error');
@@ -769,6 +776,7 @@ export default function Home() {
     const rows = filtered.map(s => ({
       'ID': s.studentId,
       'Họ tên': s.name,
+      'Tên tiếng Anh': s.englishName || '-',
       'Ngày sinh': formatDate(s.birthDate),
       'Giới tính': s.gender,
       'Tên Zalo PH': s.parentZalo || '-',
@@ -814,6 +822,7 @@ export default function Home() {
             <tr className="bg-muted-background">
               <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm">ID</th>
               <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm">Họ tên</th>
+              <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm hidden sm:table-cell">Tên tiếng Anh</th>
               <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm hidden sm:table-cell">Ngày sinh</th>
               <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm hidden md:table-cell">Giới tính</th>
               <th className="text-left p-2 sm:p-3 font-semibold text-muted-foreground text-xs sm:text-sm hidden lg:table-cell">Tên Zalo PH</th>
@@ -828,6 +837,7 @@ export default function Home() {
               <tr key={i} className="border-t border-border hover:bg-muted-background">
                 <td className="p-3 text-muted-foreground">{s.studentId}</td>
                 <td className="p-3 font-medium">{s.name}</td>
+                <td className="p-3 hidden sm:table-cell">{s.englishName || '-'}</td>
                 <td className="p-3">{formatDate(s.birthDate)}</td>
                 <td className="p-3">{s.gender}</td>
                 <td className="p-3">{s.parentZalo || '-'}</td>
@@ -836,13 +846,13 @@ export default function Home() {
                 <td className="p-3"><StatusBadge status={s.status} /></td>
                 <td className="p-3 text-center">
                   <div className="flex justify-center gap-1">
-                    <button className="p-1 hover:bg-muted-background rounded" onClick={() => setStudentModal({ open: true, editing: true, data: { studentId: s.studentId, name: s.name, birthDate: s.birthDate || '', gender: s.gender, phone: s.phone, parentZalo: s.parentZalo, address: s.address, className: s.className, note: s.note, status: s.status } })}><Edit size={14} /></button>
+                    <button className="p-1 hover:bg-muted-background rounded" onClick={() => setStudentModal({ open: true, editing: true, data: { studentId: s.studentId, name: s.name, birthDate: s.birthDate || '', gender: s.gender, englishName: s.englishName || '', phone: s.phone, parentZalo: s.parentZalo, address: s.address, className: s.className, note: s.note, status: s.status } })}><Edit size={14} /></button>
                     <button className="p-1 hover:bg-red-100 rounded text-red-500" onClick={() => deleteStudent(s.studentId)}><Trash2 size={14} /></button>
                   </div>
                 </td>
               </tr>
             ))}
-            {filteredStudents.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Chưa có dữ liệu</td></tr>}
+            {filteredStudents.length === 0 && <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Chưa có dữ liệu</td></tr>}
           </tbody>
         </table>
       </div>
@@ -1639,11 +1649,16 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Họ tên *"><input className={outlinedInput} value={d.name} onChange={e => setD({ name: e.target.value })} placeholder="Nhập họ tên" /></FormField>
           <FormField label="Ngày sinh"><input type="date" className={filledInput} value={d.birthDate} onChange={e => setD({ birthDate: e.target.value })} /></FormField>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField label="Tên tiếng Anh"><input className={filledInput} value={d.englishName} onChange={e => setD({ englishName: e.target.value })} placeholder="VD: John Smith" /></FormField>
           <FormField label="Giới tính">
             <select className={filledSelect} value={d.gender} onChange={e => setD({ gender: e.target.value })}>
               <option value="Nam">Nam</option><option value="Nữ">Nữ</option>
             </select>
           </FormField>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Tên Zalo PH"><input className={filledInput} value={d.parentZalo} onChange={e => setD({ parentZalo: e.target.value })} placeholder="Tên Zalo phụ huynh" /></FormField>
           <FormField label="SĐT (nếu có)"><input className={filledInput} value={d.phone} onChange={e => setD({ phone: e.target.value })} placeholder="09xxxxxxxx" /></FormField>
         </div>
