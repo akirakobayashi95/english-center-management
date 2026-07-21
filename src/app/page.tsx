@@ -136,17 +136,24 @@ const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: ''
 
 // Modal components — define ở module scope (KHÔNG bên trong Home) để giữ identity ổn định.
 // Nếu để trong Home(), mỗi keystroke tạo ra reference mới → React remount input → mất focus.
-const Modal = ({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-    <div className="bg-card-white w-full max-w-lg mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto shadow-card" style={{ borderRadius: 'var(--radius)', border: 'var(--border-w) solid var(--border)' }} onClick={e => e.stopPropagation()}>
-      <div className="flex justify-between items-center p-5 border-b border-border" style={{ borderBottomWidth: 'var(--border-w)' }}>
-        <h3 className="text-lg font-bold text-foreground">{title}</h3>
-        <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted-background hover:bg-secondary flex items-center justify-center"><X size={16} /></button>
+const Modal = ({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) => {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-card-white w-full max-w-lg mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto shadow-card" style={{ borderRadius: 'var(--radius)', border: 'var(--border-w) solid var(--border)' }} onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-5 border-b border-border" style={{ borderBottomWidth: 'var(--border-w)' }}>
+          <h3 className="text-lg font-bold text-foreground">{title}</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted-background hover:bg-secondary flex items-center justify-center"><X size={16} /></button>
+        </div>
+        <div className="p-5">{children}</div>
       </div>
-      <div className="p-5">{children}</div>
     </div>
-  </div>
-);
+  );
+};
 const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="mb-4">
     <label className="block text-sm font-bold mb-1 text-muted-foreground">{label}</label>
