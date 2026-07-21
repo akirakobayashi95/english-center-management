@@ -103,6 +103,8 @@ const api = async (url: string, options?: RequestInit) => {
 };
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('vi-VN').format(amount) + '₫';
+const formatVND = (num: number) => new Intl.NumberFormat('vi-VN').format(num);
+const parseVND = (str: string) => parseInt(str.replace(/[^\d]/g, '') || '0', 10);
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) return '';
   try { return format(parseISO(dateStr), 'dd/MM/yyyy'); } catch { return dateStr; }
@@ -135,6 +137,29 @@ const emptyProspect: ProspectForm = { contactDate: '', parentZalo: '', phone: ''
 
 // Modal components — define ở module scope (KHÔNG bên trong Home) để giữ identity ổn định.
 // Nếu để trong Home(), mỗi keystroke tạo ra reference mới → React remount input → mất focus.
+const CurrencyInput = ({ value, onChange, readOnly, label, className, id }: { value: number; onChange?: (v: number) => void; readOnly?: boolean; label?: string; className?: string; id?: string }) => {
+  const [fmt, setFmt] = useState(formatVND(value));
+  const commit = () => {
+    const n = parseVND(fmt);
+    onChange?.(n);
+    setFmt(formatVND(n));
+  };
+  return (
+    <div>
+      {label && <label className="block text-sm font-bold mb-1 text-muted-foreground" htmlFor={id}>{label}</label>}
+      <input
+        id={id}
+        type="text"
+        inputMode="numeric"
+        className={className || 'w-full px-3 py-2 text-sm field-filled'}
+        value={fmt}
+        onChange={e => setFmt(e.target.value.replace(/[^\d]/g, ''))}
+        onBlur={commit}
+        readOnly={readOnly}
+      />
+    </div>
+  );
+};
 const Modal = ({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) => {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -1693,7 +1718,9 @@ export default function Home() {
           <FormField label="Giáo viên"><input className={outlinedInput} value={d.teacher} onChange={e => setD({ teacher: e.target.value })} placeholder="Tên giáo viên" /></FormField>
           <FormField label="Sĩ số tối đa"><input type="number" className={filledInput} value={d.maxStudents} onChange={e => setD({ maxStudents: parseInt(e.target.value) || 25 })} /></FormField>
         </div>
-        <FormField label="Học phí/tháng (VNĐ)"><input type="number" className={filledInput} value={d.feePerSession} onChange={e => setD({ feePerSession: parseInt(e.target.value) || 150000 })} /></FormField>
+        <FormField label="Học phí/tháng (VNĐ)">
+          <CurrencyInput id="class-fee" value={d.feePerSession} onChange={v => setD({ feePerSession: v })} className={filledInput} />
+        </FormField>
         <FormField label="Ghi chú"><textarea className={filledInput} value={d.note} onChange={e => setD({ note: e.target.value })} rows={2} /></FormField>
         <div className="flex justify-end gap-2 mt-4">
           <button className={btnSecondary} onClick={() => setClassModal({ ...classModal, open: false })}>Huỷ</button>
@@ -1866,8 +1893,12 @@ export default function Home() {
           }} /></FormField>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FormField label="Thành tiền"><input type="number" className={inputClass} value={d.amount} readOnly /></FormField>
-          <FormField label="Đã thanh toán"><input type="number" className={inputClass} value={d.paid} onChange={e => setD({ paid: parseInt(e.target.value) || 0 })} /></FormField>
+          <FormField label="Thành tiền">
+            <CurrencyInput id="bill-amount" value={d.amount} readOnly className={inputClass} />
+          </FormField>
+          <FormField label="Đã thanh toán">
+            <CurrencyInput id="bill-paid" value={d.paid} onChange={v => setD({ paid: v })} className={inputClass} />
+          </FormField>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="Ngày thanh toán"><input type="date" className={inputClass} value={d.payDate} onChange={e => setD({ payDate: e.target.value })} /></FormField>
