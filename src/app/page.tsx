@@ -27,7 +27,7 @@ type DashboardData = {
   classes: string[];
 };
 type RevenueData = {
-  stats: { totalAmount: number; totalPaid: number; totalDebt: number; collectionRate: number; billCount: number; paidCount: number; unpaidCount: number; partialCount: number };
+  stats: { totalAmount: number; totalPaid: number; totalDebt: number; collectionRate: number; billCount: number; paidCount: number; unpaidCount: number };
   byMonth: Array<{ month: string; amount: number; paid: number; debt: number; sessions: number }>;
   byClass: Array<{ className: string; amount: number; paid: number; debt: number; sessions: number; count: number }>;
   byStatus: Array<{ status: string; count: number; amount: number; paid: number }>;
@@ -64,7 +64,6 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; icon: string }> 
   'Bảo lưu': { bg: 'bg-gray-100', text: 'text-gray-600', icon: '' },
   'Đã thanh toán': { bg: 'bg-green-100', text: 'text-green-700', icon: '' },
   'Chưa thanh toán': { bg: 'bg-red-100', text: 'text-red-700', icon: '' },
-  'Thanh toán một phần': { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: '' },
 };
 
 const inputClass = "w-full px-3 py-2 text-sm field-filled";
@@ -700,7 +699,6 @@ export default function Home() {
               <div className="flex flex-wrap gap-2 sm:gap-3 mt-3">
                 <span className="flex items-center gap-1 bg-card/85 text-foreground rounded-lg px-2.5 py-1 text-xs sm:text-sm"><span>📄</span><span className="tabular-nums">{r.stats.billCount}</span><span>học phí</span></span>
                 <span className="flex items-center gap-1 bg-card/85 text-foreground rounded-lg px-2.5 py-1 text-xs sm:text-sm"><span>✅</span><span className="tabular-nums">{r.stats.paidCount}</span><span>đã thu</span></span>
-                <span className="flex items-center gap-1 bg-card/85 text-foreground rounded-lg px-2.5 py-1 text-xs sm:text-sm"><span>⏳</span><span className="tabular-nums">{r.stats.partialCount}</span><span>thu một phần</span></span>
                 <span className="flex items-center gap-1 bg-card/85 text-foreground rounded-lg px-2.5 py-1 text-xs sm:text-sm"><span>❌</span><span className="tabular-nums">{r.stats.unpaidCount}</span><span>chưa thu</span></span>
               </div>
             </div>
@@ -1264,7 +1262,6 @@ export default function Home() {
     const statusColors: Record<string, string> = {
       'Đã thanh toán': '#22c55e',
       'Chưa thanh toán': '#ef4444',
-      'Thanh toán một phần': '#f59e0b',
     };
     const totalForStatus = r.byStatus.reduce((s, x) => s + x.count, 0) || 1;
 
@@ -1876,7 +1873,7 @@ export default function Home() {
           <FormField label="Ngày thanh toán"><input type="date" className={inputClass} value={d.payDate} onChange={e => setD({ payDate: e.target.value })} /></FormField>
           <FormField label="Trạng thái">
             <select className={selectClass} value={d.status} onChange={e => setD({ status: e.target.value })}>
-              {['Chưa thanh toán', 'Đã thanh toán', 'Thanh toán một phần'].map(s => <option key={s} value={s}>{s}</option>)}
+              {['Chưa thanh toán', 'Đã thanh toán'].map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </FormField>
         </div>

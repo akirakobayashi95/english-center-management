@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
 
     const paidCount = filtered.filter(b => b.status === 'Đã thanh toán').length;
     const unpaidCount = filtered.filter(b => b.status === 'Chưa thanh toán').length;
-    const partialCount = filtered.filter(b => b.status === 'Thanh toán một phần').length;
 
     // By month
     const monthMap: Record<string, { amount: number; paid: number; debt: number; sessions: number }> = {};
@@ -68,7 +67,6 @@ export async function GET(req: NextRequest) {
           billCount: filtered.length,
           paidCount,
           unpaidCount,
-          partialCount,
         },
         byMonth,
         byClass,

@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
         amount,
         paid,
         payDate: paid >= amount ? '2026-04-15' : null,
-        status: paid >= amount ? 'Đã thanh toán' : paid > 0 ? 'Thanh toán một phần' : 'Chưa thanh toán',
+        status: paid >= amount ? 'Đã thanh toán' : 'Chưa thanh toán',
       };
     });
     await db.bill.createMany({ data: billData });

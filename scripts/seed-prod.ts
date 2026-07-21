@@ -167,7 +167,7 @@ async function main() {
       studentId: s.studentId, studentName: s.name, className: s.className,
       month: '04/2026', sessions, amount, paid,
       payDate: paid >= amount ? '2026-04-15' : null,
-      status: paid >= amount ? 'Đã thanh toán' : paid > 0 ? 'Thanh toán một phần' : 'Chưa thanh toán',
+      status: paid >= amount ? 'Đã thanh toán' : 'Chưa thanh toán',
     };
   });
   await db.bill.createMany({ data: billData });
