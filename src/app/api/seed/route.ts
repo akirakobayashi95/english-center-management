@@ -3,8 +3,18 @@ import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 
 // Seed initial data for the English Center Management system
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ success: false, message: 'Seeding is disabled in production' }, { status: 403 });
+    }
+
+    const secret = req.headers.get('x-seed-secret') || '';
+    const expectedSecret = process.env.SEED_SECRET || '';
+    if (!expectedSecret || secret !== expectedSecret) {
+      return NextResponse.json({ success: false, message: 'Invalid or missing seed secret' }, { status: 401 });
+    }
+
     const existingUsers = await db.user.count();
     if (existingUsers > 0) {
       return NextResponse.json({ success: true, message: 'Already seeded' });
@@ -17,13 +27,18 @@ export async function POST() {
       bcrypt.hash('teacher123', 10),
     ]);
 
-    await db.user.createMany({
-      data: [
-        { userId: 'U001', username: 'admin', password: adminPass, fullName: 'Nguyễn Quản Trị', role: 'Admin', email: 'admin@msmyen.edu.vn', phone: '0900000001', status: 'Active' },
-        { userId: 'U002', username: 'teacher1', password: teacher1Pass, fullName: 'Cô Lê', role: 'Giáo viên', email: 'le@msmyen.edu.vn', phone: '0900000002', status: 'Active' },
-        { userId: 'U003', username: 'teacher2', password: teacher2Pass, fullName: 'Thầy Minh', role: 'Giáo viên', email: 'minh@msmyen.edu.vn', phone: '0900000003', status: 'Active' },
-      ],
-    });
+    const desiredUsers = [
+      { userId: 'U001', username: 'admin', password: adminPass, fullName: 'Nguyễn Quản Trị', role: 'Admin', email: 'admin@msmyen.edu.vn', phone: '0900000001', status: 'Active' },
+      { userId: 'U002', username: 'teacher1', password: teacher1Pass, fullName: 'Cô Lê', role: 'Giáo viên', email: 'le@msmyen.edu.vn', phone: '0900000002', status: 'Active' },
+      { userId: 'U003', username: 'teacher2', password: teacher2Pass, fullName: 'Thầy Minh', role: 'Giáo viên', email: 'minh@msmyen.edu.vn', phone: '0900000003', status: 'Active' },
+    ];
+
+    for (const u of desiredUsers) {
+      const existing = await db.user.findFirst({ where: { username: u.username } });
+      if (!existing) {
+        await db.user.create({ data: u });
+      }
+    }
 
     await db.class.createMany({
       data: [
