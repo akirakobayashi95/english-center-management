@@ -208,12 +208,7 @@ export default function Home() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Seed on mount — chỉ chạy khi bật NEXT_PUBLIC_AUTO_SEED (mặc định tắt ở production)
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_AUTO_SEED === 'true') {
-      fetch('/api/seed', { method: 'POST' }).catch(() => {});
-    }
-  }, []);
+  // Auto-seed on mount removed. Use the explicit seed route/script instead.
 
   const loadClasses = useCallback(async () => {
     const res = await api('/classes');
