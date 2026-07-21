@@ -9,6 +9,7 @@ import {
   Menu, X, Printer, Download, DollarSign, TrendingUp, UserPlus
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, parseISO } from 'date-fns';
+import * as XLSX from 'xlsx';
 
 // Types
 type Student = { id: number; studentId: string; name: string; birthDate: string | null; gender: string; phone: string; parentZalo: string; address: string; className: string; registerDate: string; note: string; status: string };
@@ -146,7 +147,6 @@ const Modal = ({ title, children, onClose }: { title: string; children: React.Re
     </div>
   </div>
 );
-
 const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="mb-4">
     <label className="block text-sm font-bold mb-1 text-muted-foreground">{label}</label>
@@ -165,6 +165,7 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [studentStatus, setStudentStatus] = useState('');
   const [scheduleMonth, setScheduleMonth] = useState(new Date());
   const [attendanceMonth, setAttendanceMonth] = useState(new Date());
   const [evaluationMonth, setEvaluationMonth] = useState(new Date());
@@ -435,7 +436,7 @@ export default function Home() {
 
       const cls = classes.find(c => c.name === student.className);
       const feePerSession = cls?.feePerSession || 150000;
-      const amount = presentCount * feePerSession;
+      const amount = feePerSession;
 
       // Check if bill already exists
       const existingBills = bills.filter(b => b.studentId === student.studentId && b.month === monthStr);
@@ -763,15 +764,45 @@ export default function Home() {
     );
   };
 
-  const renderStudents = () => (
+  const exportStudents = () => {
+    const filtered = students.filter(s => !studentStatus || s.status === studentStatus);
+    const rows = filtered.map(s => ({
+      'ID': s.studentId,
+      'Họ tên': s.name,
+      'Ngày sinh': formatDate(s.birthDate),
+      'Giới tính': s.gender,
+      'Tên Zalo PH': s.parentZalo || '-',
+      'SĐT': s.phone || '-',
+      'Lớp': s.className,
+      'Trạng thái': s.status,
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Học sinh');
+    const dateStr = format(new Date(), 'dd-MM-yyyy');
+    XLSX.writeFile(wb, `danh-sach-hoc-sinh-${dateStr}.xlsx`);
+  };
+
+  const renderStudents = () => {
+    const filteredStudents = students.filter(s => !studentStatus || s.status === studentStatus);
+    return (
     <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
       <div className="p-3 sm:p-5 border-b flex flex-col gap-3" style={{ borderBottomWidth: 'var(--border-w)' }}>
         <h3 className="font-bold text-sm sm:text-base uppercase tracking-[0.12em] text-muted-foreground">Danh sách học sinh</h3>
-        <div className="flex gap-2 items-center w-full">
+        <div className="flex gap-2 items-center w-full flex-wrap">
           <div className="relative flex-1 min-w-0">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input type="text" placeholder="Tìm học sinh..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8 pr-3 py-2 field-filled w-full" />
           </div>
+          <select value={studentStatus} onChange={e => setStudentStatus(e.target.value)} className={`${selectClass} w-[130px] flex-shrink-0 text-xs sm:text-sm`}>
+            <option value="">Tất cả trạng thái</option>
+            <option value="Đang học">Đang học</option>
+            <option value="Nghỉ học">Nghỉ học</option>
+            <option value="Bảo lưu">Bảo lưu</option>
+          </select>
+          <button className={`${btnSecondary} flex items-center gap-1 flex-shrink-0`} onClick={exportStudents}>
+            <Download size={14} /> <span className="hidden sm:inline">Xuất Excel</span>
+          </button>
           <button className={`${btnPrimary} flex items-center gap-1 flex-shrink-0`} onClick={() => setStudentModal({ open: true, editing: false, data: { ...emptyStudent } })}>
             <Plus size={14} /> <span className="hidden sm:inline">Thêm</span>
           </button>
@@ -793,7 +824,7 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {students.map((s, i) => (
+            {filteredStudents.map((s, i) => (
               <tr key={i} className="border-t border-border hover:bg-muted-background">
                 <td className="p-3 text-muted-foreground">{s.studentId}</td>
                 <td className="p-3 font-medium">{s.name}</td>
@@ -811,12 +842,13 @@ export default function Home() {
                 </td>
               </tr>
             ))}
-            {students.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Chưa có dữ liệu</td></tr>}
+            {filteredStudents.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Chưa có dữ liệu</td></tr>}
           </tbody>
         </table>
       </div>
     </div>
   );
+  };
 
   const renderClasses = () => (
     <div className="bg-card-white shadow-card overflow-hidden border border-border" style={{ borderRadius: 'var(--radius)', borderWidth: 'var(--border-w)' }}>
@@ -835,7 +867,7 @@ export default function Home() {
               <th className="text-left p-3 font-semibold text-gray-500">Trình độ</th>
               <th className="text-left p-3 font-semibold text-gray-500">Giáo viên</th>
               <th className="text-center p-3 font-semibold text-gray-500">Sĩ số tối đa</th>
-              <th className="text-left p-3 font-semibold text-gray-500">Học phí/buổi</th>
+              <th className="text-left p-3 font-semibold text-gray-500">Học phí/tháng</th>
               <th className="text-center p-3 font-semibold text-gray-500">Sĩ số hiện tại</th>
               <th className="text-center p-3 font-semibold text-gray-500">Thao tác</th>
             </tr>
@@ -1654,7 +1686,7 @@ export default function Home() {
           <FormField label="Giáo viên"><input className={outlinedInput} value={d.teacher} onChange={e => setD({ teacher: e.target.value })} placeholder="Tên giáo viên" /></FormField>
           <FormField label="Sĩ số tối đa"><input type="number" className={filledInput} value={d.maxStudents} onChange={e => setD({ maxStudents: parseInt(e.target.value) || 25 })} /></FormField>
         </div>
-        <FormField label="Học phí/buổi (VNĐ)"><input type="number" className={filledInput} value={d.feePerSession} onChange={e => setD({ feePerSession: parseInt(e.target.value) || 150000 })} /></FormField>
+        <FormField label="Học phí/tháng (VNĐ)"><input type="number" className={filledInput} value={d.feePerSession} onChange={e => setD({ feePerSession: parseInt(e.target.value) || 150000 })} /></FormField>
         <FormField label="Ghi chú"><textarea className={filledInput} value={d.note} onChange={e => setD({ note: e.target.value })} rows={2} /></FormField>
         <div className="flex justify-end gap-2 mt-4">
           <button className={btnSecondary} onClick={() => setClassModal({ ...classModal, open: false })}>Huỷ</button>
@@ -1812,7 +1844,7 @@ export default function Home() {
           <select className={selectClass} value={d.studentId} onChange={e => {
             const student = students.find(s => s.studentId === e.target.value);
             const cls = classes.find(c => c.name === student?.className);
-            setD({ studentId: e.target.value, studentName: student?.name || '', className: student?.className || '', amount: (cls?.feePerSession || 150000) * d.sessions });
+            setD({ studentId: e.target.value, studentName: student?.name || '', className: student?.className || '', amount: cls?.feePerSession || 150000 });
           }}>
             <option value="">-- Chọn học sinh --</option>
             {students.map(s => <option key={s.studentId} value={s.studentId}>{s.name} ({s.className})</option>)}
@@ -1823,7 +1855,7 @@ export default function Home() {
           <FormField label="Số buổi"><input type="number" className={inputClass} value={d.sessions} onChange={e => {
             const sessions = parseInt(e.target.value) || 0;
             const cls = classes.find(c => c.name === d.className);
-            setD({ sessions, amount: (cls?.feePerSession || 150000) * sessions });
+            setD({ sessions, amount: cls?.feePerSession || 150000 });
           }} /></FormField>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
