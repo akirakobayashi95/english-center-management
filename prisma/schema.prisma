@@ -16,6 +16,7 @@ model Student {
   name         String
   birthDate    String?  @map("birth_date")
   gender       String?
+  englishName  String?  @map("english_name")
   phone        String?
   parentZalo   String?  @map("parent_zalo")
   address      String?
