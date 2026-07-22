@@ -109,3 +109,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Lỗi server!' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { attendanceId, studentId, date } = body;
+
+    if (attendanceId) {
+      const existing = await db.attendance.findUnique({ where: { attendanceId } });
+      if (!existing) {
+        return NextResponse.json({ success: false, message: 'Không tìm thấy bản ghi điểm danh!' }, { status: 404 });
+      }
+      await db.attendance.delete({ where: { attendanceId } });
+    } else if (studentId && date) {
+      const existing = await db.attendance.findFirst({ where: { studentId, date } });
+      if (!existing) {
+        return NextResponse.json({ success: false, message: 'Không tìm thấy bản ghi điểm danh!' }, { status: 404 });
+      }
+      await db.attendance.delete({ where: { id: existing.id } });
+    } else {
+      return NextResponse.json({ success: false, message: 'Thiếu thông tin điểm danh!' }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, message: 'Xóa điểm danh thành công!' });
+  } catch (error) {
+    console.error('DELETE attendance error:', error);
+    return NextResponse.json({ success: false, message: 'Lỗi server!' }, { status: 500 });
+  }
+}

@@ -225,7 +225,7 @@ export default function Home() {
   const [billModal, setBillModal] = useState({ open: false, data: { ...emptyBill } as BillForm });
   const [userModal, setUserModal] = useState({ open: false, editing: false, data: { ...emptyUser } as UserForm });
   const [prospectModal, setProspectModal] = useState({ open: false, editing: false, data: { ...emptyProspect } as ProspectForm });
-  const [attCellModal, setAttCellModal] = useState({ open: false, date: '', studentId: '', status: '', note: '' });
+  const [attCellModal, setAttCellModal] = useState({ open: false, editing: false, date: '', studentId: '', status: '', note: '' });
 
   const showToast = useCallback((message: string, type = 'success') => {
     setToast({ message, type });
@@ -393,10 +393,24 @@ export default function Home() {
     const { date, studentId, status, note } = attCellModal;
     if (!studentId || !date || !status) return;
     const className = selectedClass || students.find(s => s.studentId === studentId)?.className || '';
-    const res = await api('/attendance', { method: 'POST', body: JSON.stringify({ studentId, className, date, status, note }) });
+    const record = attendance.find(a => a.studentId === studentId && a.date === date);
+    const res = await api('/attendance', { method: 'POST', body: JSON.stringify({ attendanceId: record?.attendanceId || null, studentId, className, date, status, note }) });
     if (res.success) {
       showToast('Đã cập nhật!');
-      setAttCellModal({ open: false, date: '', studentId: '', status: '', note: '' });
+      setAttCellModal({ open: false, editing: false, date: '', studentId: '', status: '', note: '' });
+      loadData('attendance');
+    }
+  };
+
+  const deleteCellAtt = async () => {
+    const { date, studentId } = attCellModal;
+    if (!studentId || !date) return;
+    if (!confirm('Xóa điểm danh này?')) return;
+    const record = attendance.find(a => a.studentId === studentId && a.date === date);
+    const res = await api('/attendance', { method: 'DELETE', body: JSON.stringify({ attendanceId: record?.attendanceId, studentId, date }) });
+    if (res.success) {
+      showToast('Đã xóa điểm danh!');
+      setAttCellModal({ open: false, editing: false, date: '', studentId: '', status: '', note: '' });
       loadData('attendance');
     }
   };
@@ -1021,12 +1035,12 @@ export default function Home() {
           <table className="w-full text-xs sm:text-sm min-w-[600px] sm:min-w-[800px]">
             <thead>
               <tr className="bg-muted-background">
-                <th className="text-left p-2 font-semibold text-gray-500 sticky left-0 bg-muted-background z-10 min-w-[160px]">Học sinh</th>
-                {days.map(day => {
+                <th className="text-left p-2 font-semibold text-gray-500 sticky left-0 bg-muted-background z-20 min-w-[160px] border-r border-border">Học sinh</th>
+                {days.map((day, idx) => {
                   const dateStr = format(day, 'yyyy-MM-dd');
                   const dayOfWeek = getDayOfWeek(dateStr);
                   return (
-                    <th key={dateStr} className="p-2 text-center font-semibold text-gray-500 text-xs min-w-[36px]">
+                    <th key={dateStr} className={`p-2 text-center font-semibold text-gray-500 text-xs min-w-[36px]${idx < days.length - 1 ? ' border-r border-border' : ''}`}>
                       <div className="text-gray-400">{dayOfWeek}</div>
                       <div>{format(day, 'dd')}</div>
                     </th>
@@ -1041,17 +1055,17 @@ export default function Home() {
                 const presentCount = studentAtt.filter(a => a.status === 'Có mặt').length;
                 return (
                   <tr key={s.studentId} className="border-t hover:bg-muted-background">
-                    <td className="p-2 font-medium sticky left-0 bg-card-white z-10">{s.name}</td>
-                    {days.map(day => {
+                    <td className="p-2 font-medium sticky left-0 bg-card-white z-20 border-r border-border">{s.name}</td>
+                    {days.map((day, idx) => {
                       const dateStr = format(day, 'yyyy-MM-dd');
                       const record = attendance.find(a => a.studentId === s.studentId && a.date === dateStr);
                       if (record) {
                         const colors = STATUS_COLORS[record.status] || { bg: 'bg-gray-100', icon: '' };
                         return (
-                          <td key={dateStr} className="p-1 text-center">
+                          <td key={dateStr} className={`p-1 text-center${idx < days.length - 1 ? ' border-r border-border' : ''}`}>
                             <div
                               className={`w-8 h-8 rounded-lg flex items-center justify-center mx-auto cursor-pointer hover:scale-110 transition-transform ${colors.bg}`}
-                              onClick={() => setAttCellModal({ open: true, date: dateStr, studentId: s.studentId, status: record.status, note: record.note || '' })}
+                              onClick={() => setAttCellModal({ open: true, editing: true, date: dateStr, studentId: s.studentId, status: record.status, note: record.note || '' })}
                               title={`${record.status}${record.note ? ': ' + record.note : ''}`}
                             >
                               {colors.icon}
@@ -1060,10 +1074,10 @@ export default function Home() {
                         );
                       }
                       return (
-                        <td key={dateStr} className="p-1 text-center">
+                          <td key={dateStr} className={`p-1 text-center${idx < days.length - 1 ? ' border-r border-border' : ''}`}>
                           <div
                             className="w-8 h-8 rounded-lg bg-muted-background mx-auto cursor-pointer hover:bg-secondary transition-colors"
-                            onClick={() => setAttCellModal({ open: true, date: dateStr, studentId: s.studentId, status: '', note: '' })}
+                            onClick={() => setAttCellModal({ open: true, editing: false, date: dateStr, studentId: s.studentId, status: '', note: '' })}
                           />
                         </td>
                       );
@@ -1805,7 +1819,7 @@ export default function Home() {
     if (!attCellModal.open) return null;
     const student = students.find(s => s.studentId === attCellModal.studentId);
     return (
-      <Modal title={`Điểm danh - ${student?.name || ''} - ${formatDate(attCellModal.date)}`} onClose={() => setAttCellModal({ open: false, date: '', studentId: '', status: '', note: '' })}>
+      <Modal title={`Điểm danh - ${student?.name || ''} - ${formatDate(attCellModal.date)}`} onClose={() => setAttCellModal({ open: false, editing: false, date: '', studentId: '', status: '', note: '' })}>
         <FormField label="Trạng thái">
           <div className="grid grid-cols-2 gap-2">
             {['Có mặt', 'Vắng', 'Có phép'].map(status => {
@@ -1827,8 +1841,13 @@ export default function Home() {
         <FormField label="Ghi chú">
           <input className={inputClass} value={attCellModal.note} onChange={e => setAttCellModal({ ...attCellModal, note: e.target.value })} placeholder="VD: Mẹ xin phép" />
         </FormField>
+        {attCellModal.editing && (
+          <div className="flex justify-start mt-4 -mb-2">
+            <button className={btnDanger} onClick={deleteCellAtt}>🗑️ Xóa điểm danh</button>
+          </div>
+        )}
         <div className="flex justify-end gap-2 mt-4">
-          <button className={btnSecondary} onClick={() => setAttCellModal({ open: false, date: '', studentId: '', status: '', note: '' })}>Huỷ</button>
+          <button className={btnSecondary} onClick={() => setAttCellModal({ open: false, editing: false, date: '', studentId: '', status: '', note: '' })}>Huỷ</button>
           <button className={btnPrimary} onClick={saveCellAtt}> Lưu</button>
         </div>
       </Modal>
